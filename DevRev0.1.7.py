@@ -11,6 +11,7 @@ from adafruit_ads1x15.analog_in import AnalogIn
 from time import sleep
 import os
 from os import system
+from ctypes import c_double
 import csv
 import gi
 import time
@@ -58,6 +59,9 @@ Gas_Frequency = 0.5
 
 motor_1 = 12
 motor_2 = 13
+
+gasTally = Value(c_double, 0.00)
+waterTally = Value(c_double, 0.00)
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib
@@ -219,7 +223,7 @@ class MAX31855:
         return self.latest_data
 
 
-def getData(queue, timeTotal, endDataCollect):
+def getData(queue, timeTotal, endDataCollect, gasTally):
     
     Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
     
@@ -229,8 +233,8 @@ def getData(queue, timeTotal, endDataCollect):
     timeCurTest = queue.get()
     timeTotal = queue.get()
     gasUsage = queue.get()
-    gasTally = 0.00
-    # waterUsage = queue.get()
+    waterUsage = queue.get()
+    waterFlow = queue.get()
     gasTotalUsage = queue.get()
     RotateRead = -1
     
@@ -247,7 +251,8 @@ def getData(queue, timeTotal, endDataCollect):
             timeCurTest.pop(0)
             timeTotal.pop(0)
             gasUsage.pop(0)
-            # waterUsage = queue.get()
+            waterUsage.pop(0)
+	    waterFlow.pop(0)
             gasTotalUsage.pop(0)
         
         # gasFlow.append()
@@ -261,29 +266,26 @@ def getData(queue, timeTotal, endDataCollect):
         
         timeCurTest.append(timeCurTest[-1] + DataCollectFrequency)
         timeTotal.append(timeTotal[-1] + DataCollectFrequency)
-        try:
-            gasTally = queue.get_nowait()
-        except multiprocessing.queues.Empty:
-            None
-        gasUsage.append(gasTally)   # This is measured as ft^3/s. As the data is collected every second, the total can be gotten through summation
-        gasFlow.append(gasTally/timeCurTest[-1])
+        gasUsage.append(gasTally.value)   # This is measured as ft^3/s. As the data is collected every second, the total can be gotten through summation
+        waterUsage.append(waterTally.value)
+	gasFlow.append(gasTally.value/timeCurTest[-1])
+	waterFlow.append(waterTally.value/timeCurTest[-1])
         gasTotalUsage.append(sum(gasFlow)*DataCollectFrequency)
-		#Note: Merge gas and water loops into this one, queue is grabbing things it shouldn't in this configuration
         queue.put(gasFlow)
         queue.put(tempAvg)
         queue.put(wattage)
         queue.put(timeCurTest)
         queue.put(timeTotal)
         queue.put(gasUsage)
-        # queue.put(waterUsage)
+        queue.put(waterUsage)
+	queue.put(waterFlow)
         queue.put(gasTotalUsage)
         
         sleep(DataCollectFrequency)
 
-def gasCounter(queue):
+def gasCounter():
     edge_count = 0
     last_state = GPIO.LOW
-    gasTally = 0.00
 
     while True:
         current_state = GPIO.input(Gas_Square_In)
@@ -291,18 +293,17 @@ def gasCounter(queue):
             edge_count += 1
 
             if edge_count == 3:
-                gasTally += 0.01
-                queue.put(gasTally)
+                with gasTally.get_lock():
+			gasTally.value += 0.01
                 print("0.01 added to the queue")
                 edge_count = 0
 
         last_state = current_state
         time.sleep(0.001)
 
-def waterCounter(queue):
+def waterCounter():
     edge_count = 0
     last_state = GPIO.LOW
-    waterTally = 0.00
 
     while True:
         current_state = GPIO.input(Water_Square_In)
@@ -310,8 +311,8 @@ def waterCounter(queue):
             edge_count += 1
 
             if edge_count == 3:
-                waterTally += 0.01
-                queue.put(waterTally)
+                with waterTally.get_lock():
+			waterTally.value += 0.01
                 edge_count = 0
 
         last_state = current_state
@@ -349,6 +350,8 @@ class ProgramLoop(Gtk.Window):
         self.timeCurTest = [0]
         self.timeTotal = [0]
         self.gasUsage = [0]
+	self.waterUsage = [0]
+	self.waterFlow = [0]
         self.gasTotalUsage = [0]
         
         
@@ -493,6 +496,8 @@ class ProgramLoop(Gtk.Window):
         self.queue.put(self.timeCurTest)
         self.queue.put(self.timeTotal)
         self.queue.put(self.gasUsage)
+	self.queue.put(self.waterUsage)
+	self.queue.put(self.waterFlow)
         self.queue.put(self.gasTotalUsage)
         self.endDataCollect.clear()
         self.dataProcess = multiprocessing.Process(
@@ -500,7 +505,10 @@ class ProgramLoop(Gtk.Window):
         )
         
         self.GasProcess = multiprocessing.Process(
-            target=gasCounter, args=(self.queue,)
+            target=gasCounter, args=()
+        )
+	self.WaterProcess = multiprocessing.Process(
+            target=waterCounter, args=()
         )
         self.squareWave = multiprocessing.Process(
             target=squareWaveTest, args=(Gas_Square_In, Gas_Frequency)
@@ -508,6 +516,7 @@ class ProgramLoop(Gtk.Window):
         
         self.dataProcess.start()
         self.GasProcess.start()
+	self.WaterProcess.start()
         self.squareWave.start()
         self.stack.set_visible_child_name("dataCollection4")
         return False
@@ -520,6 +529,8 @@ class ProgramLoop(Gtk.Window):
             self.timeCurTest = self.queue.get()
             self.timeTotal = self.queue.get()
             self.gasUsage = self.queue.get()
+	    self.waterUsage = self.queue.get()
+	    self.waterFlow = self.queue.get()
             self.gasTotalUsage = self.queue.get()
             if self.stack.get_visible_child_name() == "dataCollection4":
                 dataUpdate = (
@@ -529,6 +540,8 @@ class ProgramLoop(Gtk.Window):
                     f"timeCurTest: {self.timeCurTest[-1]}\n"
                     f"timeTotal: {self.timeTotal[-1]}\n"
                     f"gasUsage: {self.gasUsage[-1]}\n"
+		    f"waterUsage: {self.waterUsage[-1]}\n"
+		    f"waterFlow: {self.waterFlow[-1]}\n"
                     f"gasTotalUsage: {self.gasTotalUsage[-1]}\n"
                 )
                 self.dataCollectionlabel.set_text(dataUpdate)
@@ -540,6 +553,11 @@ class ProgramLoop(Gtk.Window):
         self.endDataCollect.set()
         self.dataProcess.join()
         self.GasProcess.join()
+	self.WaterProcess.join()
+	with gasTally.get_lock():
+		gasTally.value == 0
+	with waterTally.get_lock():
+		waterTally.value == 0
         self.stack.set_visible_child_name("motorWindDown5")
         self.motor.value = 0
         GLib.timeout_add(5000, self.continueTestingQuerry)
