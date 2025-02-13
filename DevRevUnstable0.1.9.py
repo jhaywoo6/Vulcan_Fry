@@ -268,39 +268,39 @@ def getData(queue, timeTotal, endDataCollect):
         
         # tempAvg.append(Temperature.get_thermocouple_temp() * 9 / 5 + 32)
         # Temperature.get_thermocouple_temp()
-        wattage.append(wattChan.value) # Requires ADS1115 to run
+        wattage.append(round(wattChan.value, 2)) # Requires ADS1115 to run
         
-        timeCurTest.append(timeCurTest[-1] + DataCollectFrequency)
-        timeTotal.append(timeTotal[-1] + DataCollectFrequency)
+        timeCurTest.append(round(timeCurTest[-1] + DataCollectFrequency, 2))
+        timeTotal.append(round(timeTotal[-1] + DataCollectFrequency, 2))
         
         RotateRead += 1
         if RotateRead == 8:
             RotateRead = 0
         Temperature.read_data(0)
-        curTemp.append(Temperature.get_thermocouple_temp())
-        tempAvg.append(sum(curTemp[startTime:-1])/timeCurTest[-1])
+        curTemp.append(round(Temperature.get_thermocouple_temp(), 2))
+        tempAvg.append(round(sum(curTemp[startTime:-1])/timeCurTest[-1], 2))
         
         with gasTally.get_lock():
-            gasUsage.append(gasTally.value)   # This is measured as ft^3/s. As the data is collected every second, the total can be gotten through summation
+            gasUsage.append(round(gasTally.value, 2))   # This is measured as ft^3/s. As the data is collected every second, the total can be gotten through summation
         with gasFlowRate.get_lock():
-            gasFlow.append(gasFlowRate.value)
+            gasFlow.append(round(gasFlowRate.value, 2))
         with waterTally.get_lock():
-            waterUsage.append(waterTally.value)
+            waterUsage.append(round(waterTally.value, 2))
         with waterFlowRate.get_lock():
-            waterFlow.append(waterFlowRate.value)
+            waterFlow.append(round(waterFlowRate.value, 2))
         with gasTallyTotal.get_lock():
-            gasTotalUsage.append(gasTallyTotal.value)
+            gasTotalUsage.append(round(gasTallyTotal.value, 2))
         
-        queue.put(round(gasFlow, 2))
-        queue.put(round(curTemp, 2))
-        queue.put(round(tempAvg, 2))
-        queue.put(round(wattage, 2))
-        queue.put(round(timeCurTest, 2))
-        queue.put(round(timeTotal, 2))
-        queue.put(round(gasUsage, 2))
-        queue.put(round(waterUsage, 2))
-        queue.put(round(waterFlow, 2))
-        queue.put(round(gasTotalUsage, 2))
+        queue.put(gasFlow)
+        queue.put(curTemp)
+        queue.put(tempAvg)
+        queue.put(wattage)
+        queue.put(timeCurTest)
+        queue.put(timeTotal)
+        queue.put(gasUsage)
+        queue.put(waterUsage)
+        queue.put(waterFlow)
+        queue.put(gasTotalUsage)
         
         sleep(DataCollectFrequency)
 
@@ -429,42 +429,44 @@ class ProgramLoop(Gtk.Window):
         self.nameFile1.set_vexpand(True)
         self.nameFile1.set_valign(Gtk.Align.START)
         
-        self.nameFilelabel = Gtk.Label(label="Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the frier being tested.\nEnter a file name for saving the test.\nIf the file already exists, it will be overwritten.\nPress Enter to continue.")
-        self.nameFilelabel.set_line_wrap(True)
-        self.nameFilelabel.set_xalign(0)
-        self.nameFilelabel.set_yalign(0)
+        self.nameFilelabel1 = Gtk.Label(label="Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the frier being tested.\nEnter a file name for saving the test in the first box.\nIf the file already exists, it will be overwritten.\nEnter a file directory in the second box.\nIf none is given, the default will be attempted\nPress Enter to continue.")
+        self.nameFilelabel1.set_line_wrap(True)
+        self.nameFilelabel1.set_xalign(0)
+        self.nameFilelabel1.set_yalign(0)
         
-        self.nameFileEntry = Gtk.Entry()
-        self.nameFileEntry.connect("key-press-event", self.saveFileName)
+        self.nameFileEntry1 = Gtk.Entry()
+        self.nameFileEntry1.connect("key-press-event", self.saveFileName1)
 
-        self.fileDirectoryEntry = Gtk.Entry()
-        self.fileDirectoryEntry.connect("key-press-event", self.saveFileName)
+        self.fileDirectoryEntry1 = Gtk.Entry()
+        self.fileDirectoryEntry1.connect("key-press-event", self.saveFileName1)
         
-        self.nameFile1.pack_start(self.nameFileEntry, False, False, 10)
-        self.nameFile1.pack_start(self.nameFilelabel, False, False, 10)
-        self.nameFile1.pack_start(self.fileDirectoryEntry, False, False, 10)
+        self.nameFile1.pack_start(self.nameFileEntry1, False, False, 10)
+        self.nameFile1.pack_start(self.fileDirectoryEntry1, False, False, 10)
+        self.nameFile1.pack_start(self.nameFilelabel1, False, False, 10)
+        
         self.stack.add_named(self.nameFile1, "nameFile1")
 
         # Screen 1.5: File directory error
         self.nameFile1_5 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
-        self.nameFile1_5.set_vexpand(True)
-        self.nameFile1_5.set_valign(Gtk.Align.START)
         
-        self.nameFilelabel = Gtk.Label(label="Given directory is unavalible, try another one.\n\nWelcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the frier being tested.\nEnter a file name for saving the test.\nIf the file already exists, it will be overwritten.\nEnter a file name to change the directory\nIf none is given, the default will be attempted\nPress Enter to continue.")
-        self.nameFilelabel.set_line_wrap(True)
-        self.nameFilelabel.set_xalign(0)
-        self.nameFilelabel.set_yalign(0)
+        self.nameFilelabel1_5 = Gtk.Label(label="Given directory is unavalible, try another one.\n\nWelcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the frier being tested.\nEnter a file name for saving the test in the first box.\nIf the file already exists, it will be overwritten.\nEnter a file directory in the second box.\nIf none is given, the default will be attempted\nPress Enter to continue.")
+        self.nameFilelabel1_5.set_line_wrap(True)
+        self.nameFilelabel1_5.set_xalign(0)
+        self.nameFilelabel1_5.set_yalign(0)
         
-        self.nameFileEntry = Gtk.Entry()
-        self.nameFileEntry.connect("key-press-event", self.saveFileName)
-
-        self.fileDirectoryEntry = Gtk.Entry()
-        self.fileDirectoryEntry.connect("key-press-event", self.saveFileName)
+        self.nameFileEntry1_5 = Gtk.Entry()
+        self.nameFileEntry1_5.connect("key-press-event", self.saveFileName1_5)
         
-        self.nameFile1.pack_start(self.nameFileEntry, False, False, 10)
-        self.nameFile1.pack_start(self.nameFilelabel, False, False, 10)
-        self.nameFile1.pack_start(self.fileDirectoryEntry, False, False, 10)
-        self.stack.add_named(self.nameFile1, "nameFile1_5")
+        self.fileDirectoryEntry1_5 = Gtk.Entry()
+        self.fileDirectoryEntry1_5.connect("key-press-event", self.saveFileName1_5)
+        
+        self.nameFile1_5.pack_start(self.nameFileEntry1_5, True, True, 0)
+        self.nameFile1_5.pack_start(self.fileDirectoryEntry1_5, True, True, 0)
+        
+        self.nameFile1_5.pack_start(self.nameFilelabel1_5, True, True, 0)
+        
+        self.stack.add_named(self.nameFile1_5, "nameFile1_5")
+        
 
         # Screen 2: Waits for user input to begin test
         self.waitToBegin2 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
@@ -554,19 +556,37 @@ class ProgramLoop(Gtk.Window):
         self.dataSaved9.pack_start(self.dataSavelabel, True, True, 0)
         self.stack.add_named(self.dataSaved9, "dataSaved9")
         
-    def saveFileName(self, widget, event):
+    def saveFileName1(self, widget, event):
         from gi.repository import Gdk
-        print(self.gasFlow)
         with gasTallyTotal.get_lock():
             gasTallyTotal.value = 0.00
         with waterTallyTotal.get_lock():
             waterTallyTotal.value = 0.00
         if event.keyval == Gdk.KEY_Return:
-            self.fileName = self.nameFileEntry.get_text()
-            if not self.fileDirectoryEntry.get_text():
+            self.fileName = self.nameFileEntry1.get_text()
+            print(self.fileName)
+            print(self.nameFileEntry1.get_text())
+            print(self.fileDirectoryEntry1.get_text())
+            if not self.fileDirectoryEntry1.get_text():
                 self.stack.set_visible_child_name("waitToBegin2")
-            elif os.path.isdir(self.fileDirectoryEntry.get_text()):
-                self.output_directory = self.fileDirectoryEntry.get_text()
+            elif os.path.isdir(self.fileDirectoryEntry1.get_text()):
+                self.output_directory = self.fileDirectoryEntry1.get_text()
+                self.stack.set_visible_child_name("waitToBegin2")
+            else:
+                self.stack.set_visible_child_name("nameFile1_5")
+                
+    def saveFileName1_5(self, widget, event):
+        from gi.repository import Gdk
+        with gasTallyTotal.get_lock():
+            gasTallyTotal.value = 0.00
+        with waterTallyTotal.get_lock():
+            waterTallyTotal.value = 0.00
+        if event.keyval == Gdk.KEY_Return:
+            self.fileName = self.nameFileEntry1_5.get_text()
+            if not self.fileDirectoryEntry1_5.get_text():
+                self.stack.set_visible_child_name("waitToBegin2")
+            elif os.path.isdir(self.fileDirectoryEntry1_5.get_text()):
+                self.output_directory = self.fileDirectoryEntry1_5.get_text()
                 self.stack.set_visible_child_name("waitToBegin2")
             else:
                 self.stack.set_visible_child_name("nameFile1_5")
