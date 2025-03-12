@@ -66,6 +66,7 @@ thermoNum = 0
 DataCollectFrequency = 1 
 pulsesPerGallon = 1588
 pulsesPerCubicFoot = 1
+voltage = 120
 
 thermocouple_num = 7
 return_farenheit = True
@@ -254,7 +255,7 @@ def flowControl(target, endDataCollect):
         sleep(0.05)
     setValve = 100
 
-def getData(queue, timeTotal, endDataCollect):
+def getData(queue, totalTime, endDataCollect):
     
     Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
     
@@ -262,8 +263,8 @@ def getData(queue, timeTotal, endDataCollect):
     allTemperatureReadings = queue.get()
     tempAvg = queue.get()
     wattage = queue.get()
-    timeCurTest = queue.get()
-    timeTotal = queue.get()
+    CookTime = queue.get()
+    totalTime = queue.get()
     gasUsage = queue.get()
     waterUsage = queue.get()
     waterFlow = queue.get()
@@ -271,9 +272,9 @@ def getData(queue, timeTotal, endDataCollect):
     # RotateRead = -1
     temperatureReadings = []
     
-    # gasCurrentTest = len(timeTotal)-1
-    # #startTime = timeTotal[-1]
-    timeCurTest[-1] = 0
+    # gasCurrentTest = len(totalTime)-1
+    # #startTime = totalTime[-1]
+    CookTime[-1] = 0
 
     while not endDataCollect.is_set():
         
@@ -282,8 +283,8 @@ def getData(queue, timeTotal, endDataCollect):
             allTemperatureReadings.pop(0)
             tempAvg.pop(0)
             wattage.pop(0)
-            timeCurTest.pop(0)
-            timeTotal.pop(0)
+            CookTime.pop(0)
+            totalTime.pop(0)
             gasUsage.pop(0)
             waterUsage.pop(0)
             waterFlow.pop(0)
@@ -295,8 +296,8 @@ def getData(queue, timeTotal, endDataCollect):
         # Temperature.get_thermocouple_temp()
         wattage.append(round(wattChan.value, 2)) # Requires ADS1115 to run
         
-        timeCurTest.append(round(timeCurTest[-1] + DataCollectFrequency, 2))
-        timeTotal.append(round(timeTotal[-1] + DataCollectFrequency, 2))
+        CookTime.append(round(CookTime[-1] + DataCollectFrequency, 2))
+        totalTime.append(round(totalTime[-1] + DataCollectFrequency, 2))
 
         for i in thermocouple_num:
             Temperature.read_data(i)
@@ -320,8 +321,8 @@ def getData(queue, timeTotal, endDataCollect):
         queue.put(allTemperatureReadings)
         queue.put(tempAvg)
         queue.put(wattage)
-        queue.put(timeCurTest)
-        queue.put(timeTotal)
+        queue.put(CookTime)
+        queue.put(totalTime)
         queue.put(gasUsage)
         queue.put(waterUsage)
         queue.put(waterFlow)
@@ -413,8 +414,8 @@ class ProgramLoop(Gtk.Window):
         self.allTemperatureReadings = [0]
         self.tempAvg = [0]
         self.wattage = [0]
-        self.timeCurTest = [0]
-        self.timeTotal = [0]
+        self.CookTime = [0]
+        self.totalTime = [0]
         self.gasUsage = [0]
         self.waterUsage = [0]
         self.waterFlow = [0]
@@ -632,15 +633,15 @@ class ProgramLoop(Gtk.Window):
         self.queue.put(self.allTemperatureReadings)
         self.queue.put(self.tempAvg)
         self.queue.put(self.wattage)
-        self.queue.put(self.timeCurTest)
-        self.queue.put(self.timeTotal)
+        self.queue.put(self.CookTime)
+        self.queue.put(self.totalTime)
         self.queue.put(self.gasUsage)
         self.queue.put(self.waterUsage)
         self.queue.put(self.waterFlow)
         self.queue.put(self.gasTotalUsage)
         self.endDataCollect.clear()
         self.dataProcess = multiprocessing.Process(
-            target=getData, args=(self.queue, timeTotal, self.endDataCollect), daemon=True
+            target=getData, args=(self.queue, totalTime, self.endDataCollect), daemon=True
         )
         self.GasProcess = multiprocessing.Process(
             target=gasCounter, args=(self.endDataCollect, ), daemon=True
@@ -671,8 +672,8 @@ class ProgramLoop(Gtk.Window):
             self.allTemperatureReadings = self.queue.get()
             self.tempAvg = self.queue.get()
             self.wattage = self.queue.get()
-            self.timeCurTest = self.queue.get()
-            self.timeTotal = self.queue.get()
+            self.CookTime = self.queue.get()
+            self.totalTime = self.queue.get()
             self.gasUsage = self.queue.get()
             self.waterUsage = self.queue.get()
             self.waterFlow = self.queue.get()
@@ -687,8 +688,8 @@ class ProgramLoop(Gtk.Window):
                     f"gasFlow: {self.gasFlow[-1]}\t\t\tThermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
                     f"tempAvg: {self.tempAvg[-1]}\t\t\tThermocouple 2: {self.allTemperatureReadings[-1][1]}\n"
                     f"wattage: {self.wattage[-1]}\t\t\tThermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
-                    f"timeCurTest: {self.timeCurTest[-1]}\t\t\tThermocouple 4: {self.allTemperatureReadings[-1][3]}\n"
-                    f"timeTotal: {self.timeTotal[-1]}\t\t\tThermocouple 5: {self.allTemperatureReadings[-1][4]}\n"
+                    f"CookTime: {self.CookTime[-1]}\t\t\tThermocouple 4: {self.allTemperatureReadings[-1][3]}\n"
+                    f"totalTime: {self.totalTime[-1]}\t\t\tThermocouple 5: {self.allTemperatureReadings[-1][4]}\n"
                     f"gasUsage: {self.gasUsage[-1]}\t\t\tThermocouple 6: {self.allTemperatureReadings[-1][5]}\n"
                     f"waterUsage: {self.waterUsage[-1]}\t\t\tThermocouple 7: {self.allTemperatureReadings[-1][6]}\n"
                     f"waterFlow: {self.waterFlow[-1]}\t\t\tThermocouple 8: {self.allTemperatureReadings[-1][7]}\n"
@@ -703,8 +704,8 @@ class ProgramLoop(Gtk.Window):
             self.allTemperatureReadings = self.queue.get()
             self.tempAvg = self.queue.get()
             self.wattage = self.queue.get()
-            self.timeCurTest = self.queue.get()
-            self.timeTotal = self.queue.get()
+            self.CookTime = self.queue.get()
+            self.totalTime = self.queue.get()
             self.gasUsage = self.queue.get()
             self.waterUsage = self.queue.get()
             self.waterFlow = self.queue.get()
@@ -716,11 +717,12 @@ class ProgramLoop(Gtk.Window):
 
             if self.stack.get_visible_child_name() == "dataCollection4":
                 dataUpdate = (
-                    f"tempAvg: {self.tempAvg[-1]}\n"
-                    f"wattage: {self.wattage[-1]}\n"
-                    f"timeCurTest: {self.timeCurTest[-1]}\n"
-                    f"gasUsage: {self.gasUsage[-1]}\n"
-                    f"waterUsage: {self.waterUsage[-1]}\n"
+                    f"Temperature Average: {self.tempAvg[-1]}\n"
+                    f"Wattage: {self.wattage[-1]}\n"
+                    f"Cook Time: {self.CookTime[-1]}\n"
+                    f"Total Time: {self.totalTime[-1]}\n"
+                    f"Gas Usage: {self.gasUsage[-1]}\n"
+                    f"Water Flow: {self.waterFlow[-1]}\n"
                 )
                 self.dataCollectionlabelSimple.set_text(dataUpdate)
         return True 
@@ -786,8 +788,8 @@ class ProgramLoop(Gtk.Window):
                     self.gasFlow[i],
                     self.tempAvg[i],
                     self.wattage[i],
-                    self.timeCurTest[i+1],
-                    self.timeTotal[i+1],
+                    self.CookTime[i+1],
+                    self.totalTime[i+1],
                     self.gasUsage[i],
                     self.waterUsage[i],
                     self.gasTotalUsage[i],
@@ -802,8 +804,8 @@ class ProgramLoop(Gtk.Window):
         self.tempAvg = []
         self.wattage = []
         self.allTemperatureReadings = []
-        self.timeCurTest = [0]
-        self.timeTotal = [0]
+        self.CookTime = [0]
+        self.totalTime = [0]
         self.gasUsage = []
         self.gasTotalUsage = []
         self.waterUsage - []
@@ -813,7 +815,7 @@ class ProgramLoop(Gtk.Window):
         
         
 def main():
-    global gasFlow, tempAvg, wattage, timeTotal, timeCurTest, gasUsage, gasTotalUsage
+    global gasFlow, tempAvg, wattage, totalTime, CookTime, gasUsage, gasTotalUsage
     global gasAnalogIn, max31855, wattChan
     gasFlow = []
     gasFlowTotal = []
@@ -821,8 +823,8 @@ def main():
     gasTotalUsage = []
     tempAvg = []
     wattage = []
-    timeCurTest = [0]
-    timeTotal = [0]
+    CookTime = [0]
+    totalTime = [0]
 
     # Preparing Pins
     GPIO.setmode(GPIO.BCM)
