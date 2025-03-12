@@ -407,6 +407,7 @@ class ProgramLoop(Gtk.Window):
         self.queue = queue
         
         GLib.timeout_add(100, self.check_queue_detailed)
+        GLib.timeout_add(100, self.check_queue_simple)
         
         self.gasFlow = [0]
         self.allTemperatureReadings = [0]
@@ -484,13 +485,14 @@ class ProgramLoop(Gtk.Window):
         # Screen 4: Displays Data untill user Input
         self.dataCollection4 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
 
-        self.dataCollectionlabel = Gtk.Label(label="")
-        self.dataCollectionlabel.set_line_wrap(True)
+        self.dataCollectionlabelSimple = Gtk.Label(label="")
+        self.dataCollectionlabelSimple.set_line_wrap(True)
+        self.dataCollectionlabelSimple.set_name("bigLabel") # I think I add this label thing to anything I want to make bigger. Data_Simple_CSS() has the text size settings
 
         self.dataCollectionbutton = Gtk.Button(label="End Test")
         self.dataCollectionbutton.connect("clicked", self.endTest)
 
-        self.dataCollection4.pack_start(self.dataCollectionlabel, True, True, 0)
+        self.dataCollection4.pack_start(self.dataCollectionlabelSimple, True, True, 0)
         self.dataCollection4.pack_start(self.dataCollectionbutton, True, True, 0)
         self.stack.add_named(self.dataCollection4, "dataCollection4")
 
@@ -499,12 +501,40 @@ class ProgramLoop(Gtk.Window):
 
         self.topRightButton = Gtk.Button(label="⏺")  # Simple symbol for now
         self.topRightButton.set_size_request(50, 50)  # Square size
-        self.topRightButton.connect("clicked", self.blankFunction)
+        self.topRightButton.connect("clicked", self.swapToDetailed)
 
         # Align it to the top-right
         overlay.add_overlay(self.topRightButton)
         self.topRightButton.set_halign(Gtk.Align.END)
         self.topRightButton.set_valign(Gtk.Align.START)
+
+        self.add(overlay)
+        self.Data_Simple_CSS()
+
+        # Screen 4_2: Displays Data untill user Input
+        self.dataCollection4_2 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
+
+        self.dataCollectionlabelDetailed = Gtk.Label(label="")
+        self.dataCollectionlabelDetailed.set_line_wrap(True)
+
+        self.dataCollectionbutton_2 = Gtk.Button(label="End Test")
+        self.dataCollectionbutton_2.connect("clicked", self.endTest)
+
+        self.dataCollection4_2.pack_start(self.dataCollectionlabelDetailed, True, True, 0)
+        self.dataCollection4_2.pack_start(self.dataCollectionbutton_2, True, True, 0)
+        self.stack.add_named(self.dataCollection4_2, "dataCollection4_2")
+
+        overlay = Gtk.Overlay()
+        overlay.add(self.dataCollection4_2)
+
+        self.topRightButton_2 = Gtk.Button(label="⏺")  # Simple symbol for now
+        self.topRightButton_2.set_size_request(50, 50)  # Square size
+        self.topRightButton_2.connect("clicked", self.swapToSimple)
+
+        # Align it to the top-right
+        overlay.add_overlay(self.topRightButton_2)
+        self.topRightButton_2.set_halign(Gtk.Align.END)
+        self.topRightButton_2.set_valign(Gtk.Align.START)
 
         self.add(overlay)
 
@@ -561,6 +591,20 @@ class ProgramLoop(Gtk.Window):
         self.dataSaved9.pack_start(self.dataSavelabel, True, True, 0)
         self.stack.add_named(self.dataSaved9, "dataSaved9")
         
+    def Data_Simple_CSS(self):
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_data(b"""
+        #bigLabel {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333333;  /* Optional: Dark gray text */
+        }
+        """)
+        
+        screen = Gdk.Screen.get_default()
+        style_context = Gtk.StyleContext()
+        style_context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
+
     def saveFileName1(self, widget, event):
         from gi.repository import Gdk
         with gasTallyTotal.get_lock():
@@ -614,6 +658,12 @@ class ProgramLoop(Gtk.Window):
         self.ControlProcess.start()
         self.stack.set_visible_child_name("dataCollection4")
         return False
+    
+    def swapToDetailed(self):
+        self.stack.set_visible_child_name("dataCollection4_2")
+
+    def swapToSimple(self):
+        self.stack.set_visible_child_name("dataCollection4")
         
     def check_queue_detailed(self):
         while not self.queue.empty():
@@ -633,7 +683,7 @@ class ProgramLoop(Gtk.Window):
                    self.allTemperatureReadings[-1].append("Unused") 
 
             if self.stack.get_visible_child_name() == "dataCollection4":
-                dataUpdate = (
+                dataUpdateDetailed = (
                     f"gasFlow: {self.gasFlow[-1]}\t\t\tThermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
                     f"tempAvg: {self.tempAvg[-1]}\t\t\tThermocouple 2: {self.allTemperatureReadings[-1][1]}\n"
                     f"wattage: {self.wattage[-1]}\t\t\tThermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
@@ -644,10 +694,10 @@ class ProgramLoop(Gtk.Window):
                     f"waterFlow: {self.waterFlow[-1]}\t\t\tThermocouple 8: {self.allTemperatureReadings[-1][7]}\n"
                     f"gasTotalUsage: {self.gasTotalUsage[-1]}\n"
                 )
-                self.dataCollectionlabel.set_text(dataUpdate)
+                self.dataCollectionlabelDetailed.set_text(dataUpdateDetailed)
         return True 
     
-    def check_queue_detailed(self):
+    def check_queue_simple(self):
         while not self.queue.empty():
             self.gasFlow = self.queue.get()
             self.allTemperatureReadings = self.queue.get()
@@ -672,7 +722,7 @@ class ProgramLoop(Gtk.Window):
                     f"gasUsage: {self.gasUsage[-1]}\n"
                     f"waterUsage: {self.waterUsage[-1]}\n"
                 )
-                self.dataCollectionlabel.set_text(dataUpdate)
+                self.dataCollectionlabelSimple.set_text(dataUpdate)
         return True 
         
     def endTest(self, *args):
