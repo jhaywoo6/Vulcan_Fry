@@ -491,7 +491,7 @@ class ProgramLoop(Gtk.Window):
 
         self.dataCollectionlabelSimple = Gtk.Label(label="")
         self.dataCollectionlabelSimple.set_line_wrap(True)
-        self.dataCollectionlabelSimple.set_name("bigLabel") # I think I add this label thing to anything I want to make bigger. Data_Simple_CSS() has the text size settings
+        # self.dataCollectionlabelSimple.set_name("bigLabel") I think I add this label thing to anything I want to make bigger. Data_Simple_CSS() has the text size settings
 
         self.dataCollectionbutton = Gtk.Button(label="End Test")
         self.dataCollectionbutton.connect("clicked", self.endTest)
@@ -503,8 +503,6 @@ class ProgramLoop(Gtk.Window):
         self.dataCollection4.pack_start(self.dataCollectionbutton, True, True, 0)
         self.dataCollection4.pack_start(self.topRightButton, True, True, 0)
         self.stack.add_named(self.dataCollection4, "dataCollection4")
-
-        self.Data_Simple_CSS()
 
         # Screen 4_2: Displays Data until user Input
         self.dataCollection4_2 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
@@ -575,20 +573,6 @@ class ProgramLoop(Gtk.Window):
 
         self.dataSaved9.pack_start(self.dataSavelabel, True, True, 0)
         self.stack.add_named(self.dataSaved9, "dataSaved9")
-        
-    def Data_Simple_CSS(self):
-        css_provider = Gtk.CssProvider()
-        css_provider.load_from_data(b"""
-        #bigLabel {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333333;  /* Optional: Dark gray text */
-        }
-        """)
-        
-        screen = Gdk.Screen.get_default()
-        style_context = Gtk.StyleContext()
-        style_context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     def saveFileName1(self, widget, event):
         try:
@@ -687,9 +671,9 @@ class ProgramLoop(Gtk.Window):
 
             if self.stack.get_visible_child_name() == "dataCollection4":
                 dataUpdateDetailed = (
-                    f"gasFlow: {self.gasFlow[-1]}\t\t\tThermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
+                    f"gasFlow: {self.gasFlow[-1]}\t\t\t\tThermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
                     f"tempAvg: {self.tempAvg[-1]}\t\t\tThermocouple 2: {self.allTemperatureReadings[-1][1]}\n"
-                    f"wattage: {self.wattage[-1]}\t\t\tThermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
+                    f"wattage: {self.wattage[-1]}\t\t\t\tThermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
                     f"CookTime: {self.CookTime[-1]}\t\t\tThermocouple 4: {self.allTemperatureReadings[-1][3]}\n"
                     f"totalTime: {self.totalTime[-1]}\t\t\tThermocouple 5: {self.allTemperatureReadings[-1][4]}\n"
                     f"gasUsage: {self.gasUsage[-1]}\t\t\tThermocouple 6: {self.allTemperatureReadings[-1][5]}\n"
