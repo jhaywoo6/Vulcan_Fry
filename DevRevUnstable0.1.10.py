@@ -603,17 +603,17 @@ class ProgramLoop(Gtk.Window):
         }
         """)
         
-        screen = Gdk.Screen.get_default()
+        screen = gtk.Screen.get_default()
         style_context = Gtk.StyleContext()
         style_context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     def saveFileName1(self, widget, event):
-        from gi.repository import Gdk
+        from gi.repository import gtk
         with gasTallyTotal.get_lock():
             gasTallyTotal.value = 0.00
         with waterTallyTotal.get_lock():
             waterTallyTotal.value = 0.00
-        if event.keyval == Gdk.KEY_Return:
+        if event.keyval == gtk.KEY_Return:
             self.fileName = self.nameFileEntry1.get_text()
             self.targetFlowRate = self.targetFlowRate1.get_text()
             print(self.fileName)
@@ -836,7 +836,7 @@ def main():
 
     try:
         I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
-        ads = ADS.ADS1115(i2c: I2C, gain:float = 1) # Requires ADS1115 to run
+        ads = ADS.ADS1115(i2c = I2C, gain = 1) # Requires ADS1115 to run
         wattChan = AnalogIn(ads, ADS.P0) # Requires ADS1115 to run
     except Exception as e:
         class WattChanFallback:
