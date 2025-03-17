@@ -18,6 +18,7 @@ import time
 import tkinter as tk
 from tkinter import filedialog
 
+
 # MAX31855
 # Pin # 23, 24, 21, 11, 13, 15
 # GPIO # 11, 8, 9, 17, 27, 22
@@ -82,7 +83,7 @@ waterFlowRate = Value('d', 0.00)
 waterFlowRateLock = Lock()
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gdk
 """
 This is a library for the octo MAX31855 thermocouple breakout board.
 
@@ -603,17 +604,17 @@ class ProgramLoop(Gtk.Window):
         }
         """)
         
-        screen = Gtk.Screen.get_default()
+        screen = Gdk.Screen.get_default()
         style_context = Gtk.StyleContext()
         style_context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     def saveFileName1(self, widget, event):
-        from gi.repository import Gtk
+        
         with gasTallyTotal.get_lock():
             gasTallyTotal.value = 0.00
         with waterTallyTotal.get_lock():
             waterTallyTotal.value = 0.00
-        if event.keyval == Gtk.KEY_Return:
+        if event.keyval == Gdk.KEY_Return:
             self.fileName = self.nameFileEntry1.get_text()
             self.targetFlowRate = self.targetFlowRate1.get_text()
             print(self.fileName)
