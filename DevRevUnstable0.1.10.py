@@ -257,7 +257,7 @@ def flowControl(target, endDataCollect):
         sleep(0.05)
     setValve = 100
 
-def getData(queue, totalTime, endDataCollect):
+def getData(queue, totalTime, endDataCollect, wattChan):
     
     Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
     
@@ -609,7 +609,19 @@ class ProgramLoop(Gtk.Window):
         style_context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     def saveFileName1(self, widget, event):
-        
+        try:
+            self.I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
+            self.ads = ADS.ADS1115(i2c = self.I2C, gain = 1) # Requires ADS1115 to run
+            self.wattChan = AnalogIn(self.ads, ADS.P0) # Requires ADS1115 to run
+            self.detectWattSensor = True
+        except:
+            class WattChanFallback:
+                @property
+                def value(self):
+                    return -1
+
+            self.wattChan = WattChanFallback()
+            self.detectWattSensor = False
         with gasTallyTotal.get_lock():
             gasTallyTotal.value = 0.00
         with waterTallyTotal.get_lock():
@@ -619,9 +631,11 @@ class ProgramLoop(Gtk.Window):
             self.targetFlowRate = self.targetFlowRate1.get_text()
             print(self.fileName)
             print(self.nameFileEntry1.get_text())
-            print(self.fileDirectoryEntry1.get_text())
             self.stack.set_visible_child_name("waitToBegin2")
-            self.userDataCheck = "Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nFile Directory: {self.output_directory}\nTarget Flow Rate: {self.target_flow_rate}"
+            if detectWattSensor:
+                self.userDataCheck = "Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.target_flow_rate}"
+            else:
+                self.detectWattSensor = "Warning: Wattmeter is not connected correctly. Please check the wiring and hit cancel if this is unintentional.\n\nPress \"Begin Test\" to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.target_flow_rate}"
             self.waitToBeginlabel.set_text(self.userDataCheck)
         
     def beginTest(self, *args):
@@ -643,7 +657,7 @@ class ProgramLoop(Gtk.Window):
         self.queue.put(self.gasTotalUsage)
         self.endDataCollect.clear()
         self.dataProcess = multiprocessing.Process(
-            target=getData, args=(self.queue, totalTime, self.endDataCollect), daemon=True
+            target=getData, args=(self.queue, totalTime, self.endDataCollect, self.wattChan), daemon=True
         )
         self.GasProcess = multiprocessing.Process(
             target=gasCounter, args=(self.endDataCollect, ), daemon=True
@@ -834,7 +848,8 @@ def main():
     spi = board.SPI()   # Set up the Thermocoupler
     cs = digitalio.DigitalInOut(board.D5)
     max31855 = adafruit_max31855.MAX31855(spi, cs)
-
+    
+    """
     try:
         I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
         ads = ADS.ADS1115(i2c = I2C, gain = 1) # Requires ADS1115 to run
@@ -846,7 +861,8 @@ def main():
                 return -1
 
         wattChan = WattChanFallback()
-        detectWattSensor = False
+        detectWattSensor = False"
+    """
 
     gasAnalogIn = digitalio.DigitalInOut(board.D6)   # TBD When Gas Flow Meter compatible with pi is found
 
