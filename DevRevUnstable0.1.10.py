@@ -486,7 +486,7 @@ class ProgramLoop(Gtk.Window):
         self.motorStartup3.pack_start(self.motorStartuplabel, True, True, 0)
         self.stack.add_named(self.motorStartup3, "motorStartup3")
 
-        # Screen 4: Displays Data untill user Input
+        # Screen 4: Displays Data until user Input
         self.dataCollection4 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
 
         self.dataCollectionlabelSimple = Gtk.Label(label="")
@@ -512,10 +512,11 @@ class ProgramLoop(Gtk.Window):
         self.topRightButton.set_halign(Gtk.Align.END)
         self.topRightButton.set_valign(Gtk.Align.START)
 
-        self.add(self.detailedButton)
+        # Instead of removing the stack, just switch the visible child
+        self.stack.set_visible_child(self.detailedButton)
         self.Data_Simple_CSS()
 
-        # Screen 4_2: Displays Data untill user Input
+        # Screen 4_2: Displays Data until user Input
         self.dataCollection4_2 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
 
         self.dataCollectionlabelDetailed = Gtk.Label(label="")
@@ -540,7 +541,8 @@ class ProgramLoop(Gtk.Window):
         self.topRightButton_2.set_halign(Gtk.Align.END)
         self.topRightButton_2.set_valign(Gtk.Align.START)
 
-        self.add(self.simpleButton)
+        # Instead of removing the stack, just switch the visible child
+        self.stack.set_visible_child(self.simpleButton)
 
         # Screen 5: Waits for motors to turn off
         self.motorWindDown5 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
