@@ -521,7 +521,7 @@ class ProgramLoop(Gtk.Window):
         self.dataCollection4_2.pack_start(self.dataCollectionlabelDetailed, True, True, 0)
         self.dataCollection4_2.pack_start(self.dataCollectionbutton_2, True, True, 0)
         self.dataCollection4_2.pack_start(self.topRightButton_2, True, True, 0)
-        self.stack.add_named(self.datallection4_2, "dataCollection4_2")
+        self.stack.add_named(self.dataCollection4_2, "dataCollection4_2")
 
         # Screen 5: Waits for motors to turn off
         self.motorWindDown5 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
