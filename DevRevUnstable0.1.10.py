@@ -496,24 +496,14 @@ class ProgramLoop(Gtk.Window):
         self.dataCollectionbutton = Gtk.Button(label="End Test")
         self.dataCollectionbutton.connect("clicked", self.endTest)
 
-        self.dataCollection4.pack_start(self.dataCollectionlabelSimple, True, True, 0)
-        self.dataCollection4.pack_start(self.dataCollectionbutton, True, True, 0)
-        self.stack.add_named(self.dataCollection4, "dataCollection4")
-
-        self.detailedButton = Gtk.Overlay()
-        self.detailedButton.add(self.dataCollection4)
-
-        self.topRightButton = Gtk.Button(label="⏺")  # Simple symbol for now
-        self.topRightButton.set_size_request(50, 50)  # Square size
+        self.topRightButton = Gtk.Button(label="Swap to detailed View")  # Simple symbol for now
         self.topRightButton.connect("clicked", self.swapToDetailed)
 
-        # Align it to the top-right
-        self.detailedButton.add_overlay(self.topRightButton)
-        self.topRightButton.set_halign(Gtk.Align.END)
-        self.topRightButton.set_valign(Gtk.Align.START)
+        self.dataCollection4.pack_start(self.dataCollectionlabelSimple, True, True, 0)
+        self.dataCollection4.pack_start(self.dataCollectionbutton, True, True, 0)
+        self.dataCollection4.pack_start(self.topRightButton, True, True, 0)
+        self.stack.add_named(self.dataCollection4, "dataCollection4")
 
-        # Instead of removing the stack, just switch the visible child
-        self.stack.set_visible_child(self.detailedButton)
         self.Data_Simple_CSS()
 
         # Screen 4_2: Displays Data until user Input
@@ -525,24 +515,13 @@ class ProgramLoop(Gtk.Window):
         self.dataCollectionbutton_2 = Gtk.Button(label="End Test")
         self.dataCollectionbutton_2.connect("clicked", self.endTest)
 
-        self.dataCollection4_2.pack_start(self.dataCollectionlabelDetailed, True, True, 0)
-        self.dataCollection4_2.pack_start(self.dataCollectionbutton_2, True, True, 0)
-        self.stack.add_named(self.dataCollection4_2, "dataCollection4_2")
-
-        self.simpleButton = Gtk.Overlay()
-        self.simpleButton.add(self.dataCollection4_2)
-
-        self.topRightButton_2 = Gtk.Button(label="⏺")  # Simple symbol for now
-        self.topRightButton_2.set_size_request(50, 50)  # Square size
+        self.topRightButton_2 = Gtk.Button(label="Swap to simple view")  # Simple symbol for now
         self.topRightButton_2.connect("clicked", self.swapToSimple)
 
-        # Align it to the top-right
-        self.simpleButton.add_overlay(self.topRightButton_2)
-        self.topRightButton_2.set_halign(Gtk.Align.END)
-        self.topRightButton_2.set_valign(Gtk.Align.START)
-
-        # Instead of removing the stack, just switch the visible child
-        self.stack.set_visible_child(self.simpleButton)
+        self.dataCollection4_2.pack_start(self.dataCollectionlabelDetailed, True, True, 0)
+        self.dataCollection4_2.pack_start(self.dataCollectionbutton_2, True, True, 0)
+        self.dataCollection4_2.pack_start(self.topRightButton_2, True, True, 0)
+        self.stack.add_named(self.datallection4_2, "dataCollection4_2")
 
         # Screen 5: Waits for motors to turn off
         self.motorWindDown5 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
