@@ -662,10 +662,10 @@ class ProgramLoop(Gtk.Window):
         self.stack.set_visible_child_name("dataCollection4")
         return False
     
-    def swapToDetailed(self):
+    def swapToDetailed(self, *args):
         self.stack.set_visible_child_name("dataCollection4_2")
 
-    def swapToSimple(self):
+    def swapToSimple(self, *args):
         self.stack.set_visible_child_name("dataCollection4")
         
     def check_queue_detailed(self):
