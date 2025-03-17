@@ -603,17 +603,17 @@ class ProgramLoop(Gtk.Window):
         }
         """)
         
-        screen = gtk.Screen.get_default()
+        screen = Gtk.Screen.get_default()
         style_context = Gtk.StyleContext()
         style_context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     def saveFileName1(self, widget, event):
-        from gi.repository import gtk
+        from gi.repository import Gtk
         with gasTallyTotal.get_lock():
             gasTallyTotal.value = 0.00
         with waterTallyTotal.get_lock():
             waterTallyTotal.value = 0.00
-        if event.keyval == gtk.KEY_Return:
+        if event.keyval == Gtk.KEY_Return:
             self.fileName = self.nameFileEntry1.get_text()
             self.targetFlowRate = self.targetFlowRate1.get_text()
             print(self.fileName)
