@@ -500,19 +500,19 @@ class ProgramLoop(Gtk.Window):
         self.dataCollection4.pack_start(self.dataCollectionbutton, True, True, 0)
         self.stack.add_named(self.dataCollection4, "dataCollection4")
 
-        overlay = Gtk.Overlay()
-        overlay.add(self.dataCollection4)
+        self.detailedButton = Gtk.Overlay()
+        self.detailedButton.add(self.dataCollection4)
 
         self.topRightButton = Gtk.Button(label="⏺")  # Simple symbol for now
         self.topRightButton.set_size_request(50, 50)  # Square size
         self.topRightButton.connect("clicked", self.swapToDetailed)
 
         # Align it to the top-right
-        overlay.add_overlay(self.topRightButton)
+        self.detailedButton.add_overlay(self.topRightButton)
         self.topRightButton.set_halign(Gtk.Align.END)
         self.topRightButton.set_valign(Gtk.Align.START)
 
-        self.add(overlay)
+        self.add(self.detailedButton)
         self.Data_Simple_CSS()
 
         # Screen 4_2: Displays Data untill user Input
@@ -528,19 +528,19 @@ class ProgramLoop(Gtk.Window):
         self.dataCollection4_2.pack_start(self.dataCollectionbutton_2, True, True, 0)
         self.stack.add_named(self.dataCollection4_2, "dataCollection4_2")
 
-        overlay = Gtk.Overlay()
-        overlay.add(self.dataCollection4_2)
+        self.simpleButton = Gtk.Overlay()
+        self.simpleButton.add(self.dataCollection4_2)
 
         self.topRightButton_2 = Gtk.Button(label="⏺")  # Simple symbol for now
         self.topRightButton_2.set_size_request(50, 50)  # Square size
         self.topRightButton_2.connect("clicked", self.swapToSimple)
 
         # Align it to the top-right
-        overlay.add_overlay(self.topRightButton_2)
+        self.simpleButton.add_overlay(self.topRightButton_2)
         self.topRightButton_2.set_halign(Gtk.Align.END)
         self.topRightButton_2.set_valign(Gtk.Align.START)
 
-        self.add(overlay)
+        self.add(self.simpleButton)
 
         # Screen 5: Waits for motors to turn off
         self.motorWindDown5 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
