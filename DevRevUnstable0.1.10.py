@@ -303,7 +303,7 @@ def getData(queue, totalTime, endDataCollect, wattChan):
 
         for i in range(thermocouple_num):
             Temperature.read_data(i)
-            temperatureReadings[i] = round(Temperature.get_thermocouple_temp(return_farenheit), 2)
+            temperatureReadings.append(round(Temperature.get_thermocouple_temp(return_farenheit), 2))
         
         allTemperatureReadings.append(temperatureReadings)
         tempAvg.append(round(sum(allTemperatureReadings[-1])/len(allTemperatureReadings[-1]), 2))
@@ -629,7 +629,11 @@ class ProgramLoop(Gtk.Window):
             waterTallyTotal.value = 0.00
         if event.keyval == Gdk.KEY_Return:
             self.fileName = self.nameFileEntry1.get_text()
-            self.targetFlowRate = self.targetFlowRate1.get_text()
+            target_flow_rate_input = self.targetFlowRate1.get_text()
+            try:
+                self.targetFlowRate = float(target_flow_rate_input)
+            except ValueError:
+                self.targetFlowRate = self.targetFlowRate
             print(self.fileName)
             print(self.nameFileEntry1.get_text())
             self.stack.set_visible_child_name("waitToBegin2")
