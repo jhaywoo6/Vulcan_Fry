@@ -335,7 +335,7 @@ def gasCounter(endDataCollect):
                 last_time = current_time
 
         last_state = current_state
-        time.sleep(0.0001)
+        #time.sleep(0.0001)
 
 def waterCounter(endDataCollect):
     edge_count = 0
