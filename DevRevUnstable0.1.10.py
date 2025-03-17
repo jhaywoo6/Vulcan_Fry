@@ -301,7 +301,7 @@ def getData(queue, totalTime, endDataCollect, wattChan):
         CookTime.append(round(CookTime[-1] + DataCollectFrequency, 2))
         totalTime.append(round(totalTime[-1] + DataCollectFrequency, 2))
 
-        for i in thermocouple_num:
+        for i in range(thermocouple_num):
             Temperature.read_data(i)
             temperatureReadings[i] = round(Temperature.get_thermocouple_temp(return_farenheit), 2)
         
@@ -434,8 +434,9 @@ class ProgramLoop(Gtk.Window):
         self.add(self.stack)
         self.output_directory = '/home/pengo/VULCAN_FRY/Output'
         self.targetFlowRate = 6
+        
 
-        self.userDataCheck = "Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nFile Directory: {self.output_directory}\nTarget Flow Rate: {self.target_flow_rate}"
+        self.userDataCheck = f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nFile Directory: {self.output_directory}\nTarget Flow Rate: {self.targetFlowRate}"
         
         # Screen 1: Naming the file
         self.nameFile1 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
@@ -633,9 +634,9 @@ class ProgramLoop(Gtk.Window):
             print(self.nameFileEntry1.get_text())
             self.stack.set_visible_child_name("waitToBegin2")
             if detectWattSensor:
-                self.userDataCheck = "Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.target_flow_rate}"
+                self.userDataCheck = f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
             else:
-                self.detectWattSensor = "Warning: Wattmeter is not connected correctly. Please check the wiring and hit cancel if this is unintentional.\n\nPress \"Begin Test\" to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.target_flow_rate}"
+                self.detectWattSensor = f"Warning: Wattmeter is not connected correctly. Please check the wiring and hit cancel if this is unintentional.\n\nPress \"Begin Test\" to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
             self.waitToBeginlabel.set_text(self.userDataCheck)
         
     def beginTest(self, *args):
@@ -824,7 +825,7 @@ class ProgramLoop(Gtk.Window):
         self.totalTime = [0]
         self.gasUsage = []
         self.gasTotalUsage = []
-        self.waterUsage - []
+        self.waterUsage = []
         self.waterFlow = []
         self.stack.set_visible_child_name("nameFile1")
         return False
