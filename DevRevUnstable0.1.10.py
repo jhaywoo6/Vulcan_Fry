@@ -36,6 +36,7 @@ T2 = 15
 # Note, doesn't seem to mix well with screen GPIO, but screen works without these so idk.
 
 gain = 10
+detectWattSensor = True
 
 # Gas Input
 # Pin # 31 (Pin 29 might be busted, check later. I made Gas and Water Identical for the next time this is checked)
@@ -833,9 +834,18 @@ def main():
     cs = digitalio.DigitalInOut(board.D5)
     max31855 = adafruit_max31855.MAX31855(spi, cs)
 
-    I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
-    ads = ADS.ADS1115(i2c: I2C, gain:float = 1) # Requires ADS1115 to run
-    wattChan = AnalogIn(ads, ADS.P0) # Requires ADS1115 to run
+    try:
+        I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
+        ads = ADS.ADS1115(i2c: I2C, gain:float = 1) # Requires ADS1115 to run
+        wattChan = AnalogIn(ads, ADS.P0) # Requires ADS1115 to run
+    except Exception as e:
+        class WattChanFallback:
+            @property
+            def value(self):
+                return -1
+
+        wattChan = WattChanFallback()
+        detectWattSensor = False
 
     gasAnalogIn = digitalio.DigitalInOut(board.D6)   # TBD When Gas Flow Meter compatible with pi is found
 
