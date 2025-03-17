@@ -469,7 +469,7 @@ class ProgramLoop(Gtk.Window):
         self.waitToBeginbutton.connect("clicked", self.beginTest)
 
         self.cancelBegin = Gtk.Button(label="Cancel")
-        self.cancelBegin.connect("clicked", self.saveFileName1)
+        self.cancelBegin.connect("clicked", self.resetProgram)
 
         self.waitToBegin2.pack_start(self.waitToBeginlabel, True, True, 0)
         self.waitToBegin2.pack_start(self.waitToBeginbutton, True, True, 0)
@@ -608,7 +608,7 @@ class ProgramLoop(Gtk.Window):
         style_context = Gtk.StyleContext()
         style_context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
-    def saveFileName1(self, widget, event):
+    def saveFileName1(self, event):
         try:
             self.I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
             self.ads = ADS.ADS1115(i2c = self.I2C, gain = 1) # Requires ADS1115 to run
