@@ -732,7 +732,6 @@ class ProgramLoop(Gtk.Window):
         
         initial_path = os.path.join(directory, self.fileName)
         file_path = get_unique_filename(initial_path)
-        num_thermocouples = thermocouple_num
         header = [
             "Gas Flow Rate",
             "Temperature Average",
@@ -743,7 +742,7 @@ class ProgramLoop(Gtk.Window):
             "Water Usage",
             "Gas Total Usage",
             "Water Total Usage"
-        ] + [f"Thermocouple {i+1}" for i in range(num_thermocouples)]
+        ] + [f"Thermocouple {i+1}" for i in range(thermocouple_num)]
 
         with open(file_path, 'w', newline='') as file:
             writer = csv.writer(file)
@@ -751,7 +750,7 @@ class ProgramLoop(Gtk.Window):
             writer.writerow(header)
 
             for i in range(len(self.gasFlow)):
-                temp_readings = self.allTemperatureReadings[i] if i < len(self.allTemperatureReadings) else [None] * num_thermocouples
+                temp_readings = self.allTemperatureReadings[i] if i < len(self.allTemperatureReadings) else [None] * thermocouple_num
 
                 writer.writerow([
                     self.gasFlow[i],
@@ -772,7 +771,7 @@ class ProgramLoop(Gtk.Window):
         self.gasFlow = []
         self.tempAvg = []
         self.wattage = []
-        self.allTemperatureReadings = []
+        self.allTemperatureReadings = [[]]
         self.CookTime = [0]
         self.totalTime = [0]
         self.gasUsage = []
