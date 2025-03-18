@@ -409,8 +409,7 @@ class ProgramLoop(Gtk.Window):
         self.dataProcess = None
         self.queue = queue
         
-        GLib.timeout_add(100, self.check_queue_detailed)
-        GLib.timeout_add(100, self.check_queue_simple)
+        GLib.timeout_add(100, self.check_queue)
         
         self.gasFlow = [0]
         self.allTemperatureReadings = [[]]
@@ -652,7 +651,7 @@ class ProgramLoop(Gtk.Window):
     def swapToSimple(self, *args):
         self.stack.set_visible_child_name("dataCollection4")
         
-    def check_queue_detailed(self):
+    def check_queue(self):
         markup_detailed = "<span size=\"x-large\">\%s<\span>"
         while not self.queue.empty():
             self.gasFlow = self.queue.get()
@@ -684,27 +683,8 @@ class ProgramLoop(Gtk.Window):
                 )
                 self.dataCollectionlabelDetailed.set_text(dataUpdateDetailed)
                 #self.dataCollectionlabelDetailed.set_markup(g_markup_printf_escaped(markup_detailed, dataUpdateDetailed))
-        return True 
-    
-    def check_queue_simple(self):
-        markup_simple = "<span size=\"x-large\">\%s<\span>"
-        while not self.queue.empty():
-            self.gasFlow = self.queue.get()
-            self.allTemperatureReadings = self.queue.get()
-            self.tempAvg = self.queue.get()
-            self.wattage = self.queue.get()
-            self.CookTime = self.queue.get()
-            self.totalTime = self.queue.get()
-            self.gasUsage = self.queue.get()
-            self.waterUsage = self.queue.get()
-            self.waterFlow = self.queue.get()
-            self.gasTotalUsage = self.queue.get()
-
-            if len(self.allTemperatureReadings[-1]) < 8:
-                for i in range(8 - len(self.allTemperatureReadings[-1])):
-                   self.allTemperatureReadings[-1].append("Unused") 
-
-            if self.stack.get_visible_child_name() == "dataCollection4":
+                
+            elif self.stack.getvisible_child_name() == "dataCollection4_2":
                 dataUpdateSimple = (
                     f"Temperature Average: {self.tempAvg[-1]}\n"
                     f"Wattage: {self.wattage[-1]}\n"
@@ -713,8 +693,7 @@ class ProgramLoop(Gtk.Window):
                     f"Gas Usage: {self.gasUsage[-1]}\n"
                     f"Water Flow: {self.waterFlow[-1]}\n"
                 )
-                self.dataCollectionlabelSimple.set_text(dataUpdate)
-                #self.dataCollectionlabelSimple.set_markup(g_markup_printf_escaped(markup_simple, dataUpdateSimple))
+                self.dataCollectionlabelSimple.set_text(dataUpdateSimple)
         return True 
         
     def endTest(self, *args):
