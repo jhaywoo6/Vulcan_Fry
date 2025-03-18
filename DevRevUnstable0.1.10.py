@@ -653,6 +653,7 @@ class ProgramLoop(Gtk.Window):
         self.stack.set_visible_child_name("dataCollection4")
         
     def check_queue_detailed(self):
+        markup_detailed = "<span size=\"x-large\">\%s<\span>"
         while not self.queue.empty():
             self.gasFlow = self.queue.get()
             self.allTemperatureReadings = self.queue.get()
@@ -682,9 +683,11 @@ class ProgramLoop(Gtk.Window):
                     f"gasTotalUsage: {self.gasTotalUsage[-1]}\n"
                 )
                 self.dataCollectionlabelDetailed.set_text(dataUpdateDetailed)
+                #self.dataCollectionlabelDetailed.set_markup(g_markup_printf_escaped(markup_detailed, dataUpdateDetailed))
         return True 
     
     def check_queue_simple(self):
+        markup_simple = "<span size=\"x-large\">\%s<\span>"
         while not self.queue.empty():
             self.gasFlow = self.queue.get()
             self.allTemperatureReadings = self.queue.get()
@@ -702,7 +705,7 @@ class ProgramLoop(Gtk.Window):
                    self.allTemperatureReadings[-1].append("Unused") 
 
             if self.stack.get_visible_child_name() == "dataCollection4":
-                dataUpdate = (
+                dataUpdateSimple = (
                     f"Temperature Average: {self.tempAvg[-1]}\n"
                     f"Wattage: {self.wattage[-1]}\n"
                     f"Cook Time: {self.CookTime[-1]}\n"
@@ -711,6 +714,7 @@ class ProgramLoop(Gtk.Window):
                     f"Water Flow: {self.waterFlow[-1]}\n"
                 )
                 self.dataCollectionlabelSimple.set_text(dataUpdate)
+                #self.dataCollectionlabelSimple.set_markup(g_markup_printf_escaped(markup_simple, dataUpdateSimple))
         return True 
         
     def endTest(self, *args):
