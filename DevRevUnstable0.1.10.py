@@ -413,7 +413,7 @@ class ProgramLoop(Gtk.Window):
         GLib.timeout_add(100, self.check_queue_simple)
         
         self.gasFlow = [0]
-        self.allTemperatureReadings = [0]
+        self.allTemperatureReadings = [[]]
         self.tempAvg = [0]
         self.wattage = [0]
         self.CookTime = [0]
@@ -749,7 +749,7 @@ class ProgramLoop(Gtk.Window):
         
         initial_path = os.path.join(directory, self.fileName)
         file_path = get_unique_filename(initial_path)
-        num_thermocouples = len(self.allTemperatureReadings[0]) if self.allTemperatureReadings else 0
+        num_thermocouples = thermocouple_num
         header = [
             "Gas Flow Rate",
             "Temperature Average",
