@@ -671,9 +671,9 @@ class ProgramLoop(Gtk.Window):
 
             if self.stack.get_visible_child_name() == "dataCollection4":
                 dataUpdateDetailed = (
-                    f"gasFlow: {self.gasFlow[-1]}\t\t\t\tThermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
+                    f"gasFlow: {self.gasFlow[-1]}\t\t\tThermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
                     f"tempAvg: {self.tempAvg[-1]}\t\t\tThermocouple 2: {self.allTemperatureReadings[-1][1]}\n"
-                    f"wattage: {self.wattage[-1]}\t\t\t\tThermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
+                    f"wattage: {self.wattage[-1]}\t\t\tThermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
                     f"CookTime: {self.CookTime[-1]}\t\t\tThermocouple 4: {self.allTemperatureReadings[-1][3]}\n"
                     f"totalTime: {self.totalTime[-1]}\t\t\tThermocouple 5: {self.allTemperatureReadings[-1][4]}\n"
                     f"gasUsage: {self.gasUsage[-1]}\t\t\tThermocouple 6: {self.allTemperatureReadings[-1][5]}\n"
@@ -683,7 +683,7 @@ class ProgramLoop(Gtk.Window):
                 )
                 self.dataCollectionlabelDetailed.set_text(dataUpdateDetailed)
                 #self.dataCollectionlabelDetailed.set_markup(g_markup_printf_escaped(markup_detailed, dataUpdateDetailed))
-                
+
             elif self.stack.getvisible_child_name() == "dataCollection4_2":
                 dataUpdateSimple = (
                     f"Temperature Average: {self.tempAvg[-1]}\n"
