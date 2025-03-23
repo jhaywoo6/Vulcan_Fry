@@ -258,8 +258,10 @@ def flowControl(target, endDataCollect):
     setValve = 100
 
 def getData(queue, totalTime, endDataCollect, wattChan):
-    
-    Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
+    try:
+        Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
+    except:
+        None
     
     gasFlow = queue.get()
     allTemperatureReadings = queue.get()
@@ -302,8 +304,11 @@ def getData(queue, totalTime, endDataCollect, wattChan):
         totalTime.append(round(totalTime[-1] + DataCollectFrequency, 2))
 
         for i in range(thermocouple_num):
-            Temperature.read_data(i)
-            temperatureReadings.append(round(Temperature.get_thermocouple_temp(return_farenheit), 2))
+            try:
+                Temperature.read_data(i)
+                temperatureReadings.append(round(Temperature.get_thermocouple_temp(return_farenheit), 2))
+            except:
+                temperatureReadings.append(round(5, 2))
         
         allTemperatureReadings.append(temperatureReadings)
         tempAvg.append(round(sum(allTemperatureReadings[-1])/len(allTemperatureReadings[-1]), 2))
@@ -503,7 +508,7 @@ class ProgramLoop(Gtk.Window):
         self.stack.add_named(self.dataCollection4, "dataCollection4")
 
         # Screen 4_2: Displays Data until user Input
-        self.dataCollection4_2 = Gtk.grid()
+        self.dataCollection4_2 = Gtk.Grid()
 
         self.dataCollectionlabelDetailed = Gtk.Label(label="")
         self.dataCollectionlabelDetailed.set_line_wrap(True)
@@ -681,7 +686,7 @@ class ProgramLoop(Gtk.Window):
                 )
                 self.dataCollectionlabelDetailed.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailed)}</span>")
 
-            elif self.stack.getvisible_child_name() == "dataCollection4_2":
+            elif self.stack.get_visible_child_name() == "dataCollection4_2":
                 dataUpdateSimple = (
                     f"Temperature Average: {self.tempAvg[-1]}\n"
                     f"Wattage: {self.wattage[-1]}\n"
@@ -753,8 +758,8 @@ class ProgramLoop(Gtk.Window):
                     self.gasFlow[i],
                     self.tempAvg[i],
                     self.wattage[i],
-                    self.CookTime[i+1],
-                    self.totalTime[i+1],
+                    self.CookTime[i],
+                    self.totalTime[i],
                     self.gasUsage[i],
                     self.waterUsage[i],
                     self.gasTotalUsage[i],
@@ -793,10 +798,12 @@ def main():
 
     # Preparing Pins
     GPIO.setmode(GPIO.BCM)
-
-    spi = board.SPI()   # Set up the Thermocoupler
-    cs = digitalio.DigitalInOut(board.D5)
-    max31855 = adafruit_max31855.MAX31855(spi, cs)
+    try:
+        spi = board.SPI()   # Set up the Thermocoupler
+        cs = digitalio.DigitalInOut(board.D5)
+        max31855 = adafruit_max31855.MAX31855(spi, cs)
+    except:
+        None
     
     """
     try:
