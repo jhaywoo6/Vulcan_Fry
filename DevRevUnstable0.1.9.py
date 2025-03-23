@@ -230,8 +230,10 @@ class MAX31855:
 
 
 def getData(queue, timeTotal, endDataCollect):
-    
-    Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
+    try:
+        Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
+    except:
+        None
     
     gasFlow = queue.get()
     curTemp = queue.get()
@@ -276,8 +278,11 @@ def getData(queue, timeTotal, endDataCollect):
         RotateRead += 1
         if RotateRead == 8:
             RotateRead = 0
-        Temperature.read_data(0)
-        curTemp.append(round(Temperature.get_thermocouple_temp(), 2))
+        try:
+            Temperature.read_data(0)
+            curTemp.append(round(Temperature.get_thermocouple_temp(), 2))
+        except:
+            curTemp.append(round(5, 2))
         tempAvg.append(round(sum(curTemp[startTime:-1])/timeCurTest[-1], 2))
         
         with gasTally.get_lock():
@@ -745,14 +750,25 @@ def main():
 
     # Preparing Pins
     GPIO.setmode(GPIO.BCM)
+    try:
+        spi = board.SPI()   # Set up the Thermocoupler
+        cs = digitalio.DigitalInOut(board.D5)
+        max31855 = adafruit_max31855.MAX31855(spi, cs)
+    except:
+        None
 
-    spi = board.SPI()   # Set up the Thermocoupler
-    cs = digitalio.DigitalInOut(board.D5)
-    max31855 = adafruit_max31855.MAX31855(spi, cs)
+    try:
+        I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
+        ads = ADS.ADS1115(i2c = I2C, gain = 1) # Requires ADS1115 to run
+        wattChan = AnalogIn(ads, ADS.P0) # Requires ADS1115 to run
+    except Exception as e:
+        class WattChanFallback:
+            @property
+            def value(self):
+                return -1
 
-    i2c = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
-    ads = ADS.ADS1115(i2c) # Requires ADS1115 to run
-    wattChan = AnalogIn(ads, ADS.P0) # Requires ADS1115 to run
+        wattChan = WattChanFallback()
+        detectWattSensor = False
 
     GPIO.setup(Gas_Square_In, GPIO.IN)
     gasAnalogIn = digitalio.DigitalInOut(board.D6)   # TBD When Gas Flow Meter compatible with pi is found
