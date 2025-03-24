@@ -83,6 +83,7 @@ DataCollectFrequency = 1
 pulsesPerGallon = 1588
 pulsesPerCubicFoot = 1
 targetFlowRateDefault = 6
+setValveDefault = 100 # 100% Closed, 0% Open
 
 gasTally = Value(c_double, 0.00)
 gasTallyTotal = Value(c_double, 0.00)
@@ -98,11 +99,17 @@ waterFlowRateLock = Lock()
 flagADS1115 = False
 flagMAX31855 = False
 flagDS3502 = False
+flagAutoFlowCtrl = True
 
-
+resolution = 800, 480
 
 def flowControl(target, endDataCollect, ds3502):
-    setValve = 0  # 0 Open, 100 Closed
+    setValve = setValveDefault  # 0 Open, 100 Closed
+    try:
+        ds3502.wiper = setValve * 100
+        flagDS3502 = True
+    except:
+        flagDS3502 = False
     errorMargin = target * 0.05
     while not endDataCollect.is_set():
         with waterFlowRate.get_lock():
@@ -115,7 +122,7 @@ def flowControl(target, endDataCollect, ds3502):
             except:
                 flagDS3502 = False
         sleep(0.05)
-    setValve = 100
+    setValve = setValveDefault
     try:
         ds3502.wiper = setValve * 100
         flagDS3502 = True
@@ -282,7 +289,7 @@ class ProgramLoop(Gtk.Window):
     def __init__(self, queue):
         super().__init__(title="Looping App")
         self.endDataCollect = Event()
-        self.set_default_size(800, 480)
+        self.set_default_size(resolution)
         self.set_resizable(False)
         self.set_border_width(8)
 
@@ -513,13 +520,15 @@ class ProgramLoop(Gtk.Window):
             self.ads = ADS.ADS1115(i2c = self.I2C, address = 0x77, gain = 1) # Requires ADS1115 to run
             self.ds3502 = adafruit_ds3502.DS3502(i2c = self.I2C, address = 0x76)
             self.wattChan = AnalogIn(self.ads, ADS.P0) # Requires ADS1115 to run
-            self.detectWattSensor = True
+            flagADS1115 = True
+            flagDS3502 = True
         except:
             class WattChanFallback:
                 @property
                 def value(self):
                     return -1
-            self.detectWattSensor = False
+            flagADS1115 = False
+            flagDS3502 = False
 
             self.wattChan = WattChanFallback()
             self.detectWattSensor = False
