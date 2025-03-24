@@ -6,6 +6,7 @@ import digitalio
 import adafruit_max31855
 import busio
 import adafruit_ads1x15.ads1115 as ADS
+import adafruit_ds3502
 import RPi.GPIO as GPIO
 from adafruit_ads1x15.analog_in import AnalogIn
 from time import sleep
@@ -65,7 +66,7 @@ thermoNum = 0
 
 # Collects data every DataCollectFrequency seconds. Note: low values will increase the data collection speed, but currently may freeze the program. Modify with care.
 
-DataCollectFrequency = 1 
+DataCollectFrequency = 1
 pulsesPerGallon = 1588
 pulsesPerCubicFoot = 1
 voltage = 120
@@ -246,7 +247,7 @@ class MAX31855:
     def get_latest_data(self):
         return self.latest_data
 
-def flowControl(target, endDataCollect):
+def flowControl(target, endDataCollect, ds3502):
     setValve = 0  # 0 Open, 100 Closed
     errorMargin = target * 0.05
     while not endDataCollect.is_set():
@@ -254,8 +255,17 @@ def flowControl(target, endDataCollect):
             waterFlow = waterFlowRate.value 
         if abs(target - waterFlow) > errorMargin:
             setValve = max(0, min(100, setValve + (1 if target < waterFlow else -1)))
+            try:
+                ds3502.wiper = setValve * 100
+            except:
+                None
         sleep(0.05)
     setValve = 100
+    try:
+        ds3502.wiper = setValve * 100
+    except:
+        None
+    
 
 def getData(queue, totalTime, endDataCollect, wattChan):
     try:
@@ -281,8 +291,9 @@ def getData(queue, totalTime, endDataCollect, wattChan):
     CookTime[-1] = 0
 
     while not endDataCollect.is_set():
+        start_time = time.time()
         
-        if len(gasFlow) >= 10000:
+        if len(gasFlow) >= 1000000:
             gasFlow.pop(0)
             allTemperatureReadings.pop(0)
             tempAvg.pop(0)
@@ -302,40 +313,41 @@ def getData(queue, totalTime, endDataCollect, wattChan):
         
         CookTime.append(round(CookTime[-1] + DataCollectFrequency, 2))
         totalTime.append(round(totalTime[-1] + DataCollectFrequency, 2))
-
+        temperatureReadings = []
         for i in range(thermocouple_num):
             try:
                 Temperature.read_data(i)
                 temperatureReadings.append(round(Temperature.get_thermocouple_temp(return_farenheit), 2))
             except:
                 temperatureReadings.append(round(5, 2))
-        
         allTemperatureReadings.append(temperatureReadings)
         tempAvg.append(round(sum(allTemperatureReadings[-1])/len(allTemperatureReadings[-1]), 2))
         
-        with gasTally.get_lock():
-            gasUsage.append(round(gasTally.value, 2))   # This is measured as ft^3/s. As the data is collected every second, the total can be gotten through summation
-        with gasFlowRate.get_lock():
+        if len(allTemperatureReadings[-1]) < 8:
+                for i in range(8 - len(allTemperatureReadings[-1])):
+                   allTemperatureReadings[-1].append("Unused")
+        with gasTally.get_lock(), gasFlowRate.get_lock(), waterTally.get_lock(), waterFlowRate.get_lock(), gasTallyTotal.get_lock():
+            gasUsage.append(round(gasTally.value, 2))
             gasFlow.append(round(gasFlowRate.value, 2))
-        with waterTally.get_lock():
             waterUsage.append(round(waterTally.value, 2))
-        with waterFlowRate.get_lock():
             waterFlow.append(round(waterFlowRate.value, 2))
-        with gasTallyTotal.get_lock():
             gasTotalUsage.append(round(gasTallyTotal.value, 2))
+
         
-        queue.put(gasFlow)
-        queue.put(allTemperatureReadings)
-        queue.put(tempAvg)
-        queue.put(wattage)
-        queue.put(CookTime)
-        queue.put(totalTime)
-        queue.put(gasUsage)
-        queue.put(waterUsage)
-        queue.put(waterFlow)
-        queue.put(gasTotalUsage)
+        queue.put(gasFlow[-1])
+        queue.put(allTemperatureReadings[-1])
+        queue.put(tempAvg[-1])
+        queue.put(wattage[-1])
+        queue.put(CookTime[-1])
+        queue.put(totalTime[-1])
+        queue.put(gasUsage[-1])
+        queue.put(waterUsage[-1])
+        queue.put(waterFlow[-1])
+        queue.put(gasTotalUsage[-1])
         
-        sleep(DataCollectFrequency)
+        elapsed_time = time.time() - start_time
+        sleep_time = max(0, DataCollectFrequency - elapsed_time)
+        time.sleep(sleep_time)
 
 def gasCounter(endDataCollect):
     edgeCount = 0
@@ -409,6 +421,7 @@ class ProgramLoop(Gtk.Window):
         super().__init__(title="Looping App")
         self.endDataCollect = Event()
         self.set_default_size(800, 480)
+        self.set_resizable(False)
         self.set_border_width(8)
 
         self.dataProcess = None
@@ -503,15 +516,20 @@ class ProgramLoop(Gtk.Window):
         self.topRightButton.connect("clicked", self.swapToDetailed)
 
         self.dataCollection4.attach(self.dataCollectionlabelSimple, 0, 1, 4, 2)
-        self.dataCollection4.attach(self.dataCollectionbutton, 0, 3, 4, 1)
-        self.dataCollection4.attach(self.topRightButton, 3, 0, 1, 1)
+        self.dataCollection4.attach(self.dataCollectionbutton, 0, 3, 7, 1)
+        self.dataCollection4.attach(self.topRightButton, 6, 0, 1, 1)
+        self.dataCollection4.set_column_spacing(96)
+        self.dataCollection4.set_row_spacing(48)
         self.stack.add_named(self.dataCollection4, "dataCollection4")
 
         # Screen 4_2: Displays Data until user Input
         self.dataCollection4_2 = Gtk.Grid()
 
-        self.dataCollectionlabelDetailed = Gtk.Label(label="")
-        self.dataCollectionlabelDetailed.set_line_wrap(True)
+        self.dataCollectionlabelDetailedValues = Gtk.Label(label="")
+        self.dataCollectionlabelDetailedValues.set_line_wrap(True)
+        
+        self.dataCollectionlabelDetailedTemps = Gtk.Label(label="")
+        self.dataCollectionlabelDetailedTemps.set_line_wrap(True)
 
         self.dataCollectionbutton_2 = Gtk.Button(label="End Test")
         self.dataCollectionbutton_2.connect("clicked", self.endTest)
@@ -519,15 +537,17 @@ class ProgramLoop(Gtk.Window):
         self.topRightButton_2 = Gtk.Button(label="Swap to simple view")  # Simple symbol for now
         self.topRightButton_2.connect("clicked", self.swapToSimple)
 
-        self.dataCollection4_2.attach(self.dataCollectionlabelDetailed, 0, 1, 4, 2)
-        self.dataCollection4_2.attach(self.dataCollectionbutton_2, 0, 3, 4, 1)
-        self.dataCollection4_2.attach(self.topRightButton_2, 3, 0, 1, 1)
+        self.dataCollection4_2.attach(self.dataCollectionlabelDetailedValues, 0, 1, 2, 2)
+        self.dataCollection4_2.attach(self.dataCollectionlabelDetailedTemps, 6, 1, 2, 2)
+        self.dataCollection4_2.attach(self.dataCollectionbutton_2, 0, 3, 8, 1)
+        self.dataCollection4_2.attach(self.topRightButton_2, 7, 0, 1, 1)
+        self.dataCollection4_2.set_column_spacing(64)
         self.stack.add_named(self.dataCollection4_2, "dataCollection4_2")
 
         # Screen 5: Waits for motors to turn off
         self.motorWindDown5 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
 
-        self.motorWindDownlabel = Gtk.Label(label="The motors should be turing off. If they do not,end the test and contact the VULCAN_FRY team.")
+        self.motorWindDownlabel = Gtk.Label(label="The motors should be turing off. If they do not, end the test and contact the VULCAN_FRY team.")
         self.motorWindDownlabel.set_line_wrap(True)
 
         self.motorWindDown5.pack_start(self.motorWindDownlabel, True, True, 0)
@@ -549,7 +569,7 @@ class ProgramLoop(Gtk.Window):
         # Screen 7: Save Data to file Querry
         self.saveDataQuerry7 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
 
-        self.DQbuttonSave = Gtk.Button(label="Click to save test to given destination. Program will restart.")
+        self.DQbuttonSave = Gtk.Button(label="Click to pick a file directory to save the test. Program will restart.")
         self.DQbuttonReset = Gtk.Button(label="Click to restart program without saving.")
         self.DQbuttonSave.connect("clicked", self.saveData)
         self.DQbuttonReset.connect("clicked", self.resetProgram)
@@ -578,9 +598,13 @@ class ProgramLoop(Gtk.Window):
         self.stack.add_named(self.dataSaved9, "dataSaved9")
 
     def saveFileName1(self, widget, event):
+        
+        self.targetFlowRate = 6
+        self.fileName = "Test"
         try:
             self.I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
             self.ads = ADS.ADS1115(i2c = self.I2C, gain = 1) # Requires ADS1115 to run
+            self.ds3502 = adafruit_ds3502.DS3502(i2c = self.I2C)
             self.wattChan = AnalogIn(self.ads, ADS.P0) # Requires ADS1115 to run
             self.detectWattSensor = True
         except:
@@ -596,14 +620,13 @@ class ProgramLoop(Gtk.Window):
         with waterTallyTotal.get_lock():
             waterTallyTotal.value = 0.00
         if event.keyval == Gdk.KEY_Return:
-            self.fileName = self.nameFileEntry1.get_text()
+            if self.nameFileEntry1.get_text().strip():
+                self.fileName = self.nameFileEntry1.get_text()
             target_flow_rate_input = self.targetFlowRate1.get_text()
             try:
                 self.targetFlowRate = float(target_flow_rate_input)
             except ValueError:
                 self.targetFlowRate = self.targetFlowRate
-            print(self.fileName)
-            print(self.nameFileEntry1.get_text())
             self.stack.set_visible_child_name("waitToBegin2")
             if detectWattSensor:
                 self.userDataCheck = f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
@@ -638,9 +661,14 @@ class ProgramLoop(Gtk.Window):
         self.WaterProcess = multiprocessing.Process(
             target=waterCounter, args=(self.endDataCollect, ), daemon=True
         )
-        self.ControlProcess = multiprocessing.Process(
-            target=flowControl, args=(self.targetFlowRate, self.endDataCollect), daemon=True
-        )
+        try:
+            self.ControlProcess = multiprocessing.Process(
+                target=flowControl, args=(self.targetFlowRate, self.endDataCollect, self.ds3502), daemon=True
+            )
+        except:
+            self.ControlProcess = multiprocessing.Process(
+                target=flowControl, args=(self.targetFlowRate, self.endDataCollect, -1), daemon=True
+            )
         
         self.dataProcess.start()
         self.GasProcess.start()
@@ -657,45 +685,50 @@ class ProgramLoop(Gtk.Window):
         
     def check_queue(self):
         while not self.queue.empty():
-            self.gasFlow = self.queue.get()
-            self.allTemperatureReadings = self.queue.get()
-            self.tempAvg = self.queue.get()
-            self.wattage = self.queue.get()
-            self.CookTime = self.queue.get()
-            self.totalTime = self.queue.get()
-            self.gasUsage = self.queue.get()
-            self.waterUsage = self.queue.get()
-            self.waterFlow = self.queue.get()
-            self.gasTotalUsage = self.queue.get()
+            self.gasFlow.append(self.queue.get())
+            self.allTemperatureReadings.append(self.queue.get())
+            self.tempAvg.append(self.queue.get())
+            self.wattage.append(self.queue.get())
+            self.CookTime.append(self.queue.get())
+            self.totalTime.append(self.queue.get())
+            self.gasUsage.append(self.queue.get())
+            self.waterUsage.append(self.queue.get())
+            self.waterFlow.append(self.queue.get())
+            self.gasTotalUsage.append(self.queue.get())
 
-            if len(self.allTemperatureReadings[-1]) < 8:
-                for i in range(8 - len(self.allTemperatureReadings[-1])):
-                   self.allTemperatureReadings[-1].append("Unused") 
-
-            if self.stack.get_visible_child_name() == "dataCollection4":
-                dataUpdateDetailed = (
-                    f"gasFlow: {self.gasFlow[-1]}\t\t\tThermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
-                    f"tempAvg: {self.tempAvg[-1]}\t\t\tThermocouple 2: {self.allTemperatureReadings[-1][1]}\n"
-                    f"wattage: {self.wattage[-1]}\t\t\tThermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
-                    f"CookTime: {self.CookTime[-1]}\t\t\tThermocouple 4: {self.allTemperatureReadings[-1][3]}\n"
-                    f"totalTime: {self.totalTime[-1]}\t\t\tThermocouple 5: {self.allTemperatureReadings[-1][4]}\n"
-                    f"gasUsage: {self.gasUsage[-1]}\t\t\tThermocouple 6: {self.allTemperatureReadings[-1][5]}\n"
-                    f"waterUsage: {self.waterUsage[-1]}\t\t\tThermocouple 7: {self.allTemperatureReadings[-1][6]}\n"
-                    f"waterFlow: {self.waterFlow[-1]}\t\t\tThermocouple 8: {self.allTemperatureReadings[-1][7]}\n"
-                    f"gasTotalUsage: {self.gasTotalUsage[-1]}\n"
-                )
-                self.dataCollectionlabelDetailed.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailed)}</span>")
-
-            elif self.stack.get_visible_child_name() == "dataCollection4_2":
-                dataUpdateSimple = (
-                    f"Temperature Average: {self.tempAvg[-1]}\n"
-                    f"Wattage: {self.wattage[-1]}\n"
-                    f"Cook Time: {self.CookTime[-1]}\n"
-                    f"Total Time: {self.totalTime[-1]}\n"
-                    f"Gas Usage: {self.gasUsage[-1]}\n"
-                    f"Water Flow: {self.waterFlow[-1]}\n"
-                )
-                self.dataCollectionlabelSimple.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateSimple)}</span>")
+            dataUpdateDetailedValues = (
+                f"gasFlow: {self.gasFlow[-1]}\n"
+                f"tempAvg: {self.tempAvg[-1]}\n"
+                f"wattage: {self.wattage[-1]}\n"
+                f"CookTime: {self.CookTime[-1]}\n"
+                f"totalTime: {self.totalTime[-1]}\n"
+                f"gasUsage: {self.gasUsage[-1]}\n"
+                f"waterUsage: {self.waterUsage[-1]}\n"
+                f"waterFlow: {self.waterFlow[-1]}\n"
+                f"gasTotalUsage: {self.gasTotalUsage[-1]}\n"
+            )
+            dataUpdateDetailedTemps = (
+                f"Thermocouple 1: {self.allTemperatureReadings[-1][0]}\n"
+                f"Thermocouple 2: {self.allTemperatureReadings[-1][1]}\n"
+                f"Thermocouple 3: {self.allTemperatureReadings[-1][2]}\n"
+                f"Thermocouple 4: {self.allTemperatureReadings[-1][3]}\n"
+                f"Thermocouple 5: {self.allTemperatureReadings[-1][4]}\n"
+                f"Thermocouple 6: {self.allTemperatureReadings[-1][5]}\n"
+                f"Thermocouple 7: {self.allTemperatureReadings[-1][6]}\n"
+                f"Thermocouple 8: {self.allTemperatureReadings[-1][7]}\n"
+            )
+            dataUpdateSimple = (
+                f"Temperature Average: {self.tempAvg[-1]}\n"
+                f"Wattage: {self.wattage[-1]}\n"
+                f"Cook Time: {self.CookTime[-1]}\n"
+                f"Total Time: {self.totalTime[-1]}\n"
+                f"Gas Usage: {self.gasUsage[-1]}\n"
+                f"Water Flow: {self.waterFlow[-1]}\n"
+            )
+            self.dataCollectionlabelDetailedValues.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedValues)}</span>")
+            self.dataCollectionlabelDetailedTemps.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedTemps)}</span>")
+            self.dataCollectionlabelSimple.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateSimple)}</span>")
+            
         return True 
         
     def endTest(self, *args):
