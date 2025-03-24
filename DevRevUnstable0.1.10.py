@@ -453,8 +453,34 @@ class ProgramLoop(Gtk.Window):
         self.targetFlowRate = 6
         
 
-        self.text_userDataCheck = """Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"""
-        self.text_nameFilelabel1 = """Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the frier being tested.\nEnter a file name for saving the test in the first box.\nIf the file already exists, it will be overwritten.\nEnter a file directory in the second box.\nIf none is given, the default will be attempted\nEnter the target flow rate in the third box.\nPress Enter to continue."""
+        self.text_userDataCheck = (
+            """Press the button to begin the test.\n
+            This should start and run the motors for the duration of the test.\n
+            If the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\n
+            Do not attempt another test and contact the VULCAN_FRY team for assistance.\n
+            File Name: {self.fileName}\n
+            Target Flow Rate: {self.targetFlowRate}"""
+        )
+        self.text_nameFilelabel1 = (
+            """Welcome to the simulated ASTM F1361 test apparatus.\n
+            Please read the user manual prior to setting up this test.\n
+            Ensure that the sensors are affixed to the frier being tested.\n
+            Enter a file name for saving the test in the first box.\n
+            If the file already exists, it will be overwritten.\n
+            Enter a file directory in the second box.\n
+            If none is given, the default will be attempted\n
+            Enter the target flow rate in the third box.\n
+            Press Enter to continue."""
+        )
+        self.text_userDataCheck_nowattmeter = (
+            """Warning: Wattmeter is not connected correctly. Please check the wiring and hit cancel if this is unintentional.\n\n
+            
+            Press \"Begin Test\" to begin the test.\nThis should start and run the motors for the duration of the test.\n
+            If the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\n
+            Do not attempt another test and contact the VULCAN_FRY team for assistance.\n
+            File Name: {self.fileName}\n
+            Target Flow Rate: {self.targetFlowRate}"""
+            )
         self.text_motorStartuplabel = "The motors should be turning on. If they do not, end the test and contact the VULCAN_FRY team."
         self.text_motorWindDownlabel = "The motors should be turning off. If they do not, end the test and contact the VULCAN_FRY team."
         self.text_savingDatalabel = "Saving Data..."
@@ -462,6 +488,7 @@ class ProgramLoop(Gtk.Window):
         
         self.text_userDataCheck_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
         self.text_nameFilelabel1_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_nameFilelabel1)}</span>"
+        self.text_userDataCheck_nowattmeter_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_nameFilelabel_nowattmeter)}</span>"
         self.text_motorStartuplabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_motorStartuplabel)}</span>"
         self.text_motorWindDownlabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_motorWindDownlabel)}</span>"
         self.text_savingDatalabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_savingDatalabel)}</span>"
@@ -647,9 +674,9 @@ class ProgramLoop(Gtk.Window):
                 self.targetFlowRate = self.targetFlowRate
             self.stack.set_visible_child_name("waitToBegin2")
             if detectWattSensor:
-                self.userDataCheck = f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
+                self.userDataCheck.set_markup(self.text_userDataCheck_markup)
             else:
-                self.detectWattSensor = f"Warning: Wattmeter is not connected correctly. Please check the wiring and hit cancel if this is unintentional.\n\nPress \"Begin Test\" to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
+                self.userDataCheck.set_markup(self.text_userDataCheck_nowattmeter_markup)
             self.waitToBeginlabel.set_text(self.userDataCheck)
         
     def beginTest(self, *args):
