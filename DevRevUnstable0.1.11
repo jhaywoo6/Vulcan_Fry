@@ -25,9 +25,9 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gdk
 
 # Code Parameters. These control various aspects of the program.
-# When modifying pins, unplug all wires connecting to the gpio pins. 
+# When modifying pins, unplug all wires connecting to the gpio pins.
 # Never wire output pins to ground or other output pins.
-# Pin # refers to the physical location of the pin. 
+# Pin # refers to the physical location of the pin.
 # GPIO # refers to the Broadcom pin number. Use these for the code parameters. Using the physical pin numbers erroneously can cause shorts and damage to the pi.
 
 # MAX31855
@@ -75,15 +75,15 @@ motor_2 = 13
 thermoNum = 7
 return_farenheit = True
 
-# Collects data every DataCollectFrequency seconds. 
+# Collects data every DataCollectFrequency seconds.
 # Note: getData is unoptimized and slow, lower values may be auto adjusted to the speed of getData.
 
 DataCollectFrequency = 1
 
-pulsesPerGallon = 1588
+pulsesPerGallon = 1588  
 pulsesPerCubicFoot = 1
 targetFlowRateDefault = 6
-setValveDefault = 100 # 100% Closed, 0% Open
+setValveDefault = 127 # 127 Closed, 0    Open
 
 gasTally = Value(c_double, 0.00)
 gasTallyTotal = Value(c_double, 0.00)
@@ -104,20 +104,22 @@ flagAutoFlowCtrl = True
 resolution = 800, 480
 
 def flowControl(target, endDataCollect, ds3502):
-    setValve = setValveDefault  # 0 Open, 100 Closed
+    setValve = setValveDefault  # 0 Open, 127 Closed
     try:
-        ds3502.wiper = setValve * 100
+        ds3502.wiper = setValve
         flagDS3502 = True
+        print(flagDS3502)
     except:
         flagDS3502 = False
+        print(flagDS3502)
     errorMargin = target * 0.05
     while not endDataCollect.is_set():
         with waterFlowRate.get_lock():
-            waterFlow = waterFlowRate.value 
+            waterFlow = waterFlowRate.value
         if abs(target - waterFlow) > errorMargin:
-            setValve = max(0, min(100, setValve + (1 if target < waterFlow else -1)))
+            setValve = max(0, min(127, setValve + (1 if target < waterFlow else -1)))
             try:
-                ds3502.wiper = setValve * 100
+                ds3502.wiper = setValve
                 flagDS3502 = True
             except:
                 flagDS3502 = False
@@ -128,7 +130,7 @@ def flowControl(target, endDataCollect, ds3502):
         flagDS3502 = True
     except:
         flagDS3502 = False
-    
+
 
 def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
     try:
@@ -136,7 +138,7 @@ def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
         flagMAX31855 = True
     except:
         flagMAX31855 = False
-    
+
     gasFlow = queue.get()
     allTemperatureReadings = queue.get()
     tempAvg = queue.get()
@@ -149,14 +151,14 @@ def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
     gasTotalUsage = queue.get()
     # RotateRead = -1
     temperatureReadings = []
-    
+
     # gasCurrentTest = len(totalTime)-1
     # #startTime = totalTime[-1]
     CookTime[-1] = 0
 
     while not endDataCollect.is_set():
         start_time = time.time()
-        
+
         if len(gasFlow) >= 1000000:
             gasFlow.pop(0)
             allTemperatureReadings.pop(0)
@@ -168,14 +170,14 @@ def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
             waterUsage.pop(0)
             waterFlow.pop(0)
             gasTotalUsage.pop(0)
-        
+
         # gasFlow.append()
-        
+
         # tempAvg.append(Temperature.get_thermocouple_temp() * 9 / 5 + 32)
         # Temperature.get_thermocouple_temp()
         wattage.append(round(wattChan.value, 2)) # Requires ADS1115 to run
-        
-        
+
+
         temperatureReadings = []
         for i in range(thermoNum):
             try:
@@ -185,7 +187,7 @@ def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
                 temperatureReadings.append(round(5, 2))
         allTemperatureReadings.append(temperatureReadings)
         tempAvg.append(round(sum(allTemperatureReadings[-1])/len(allTemperatureReadings[-1]), 2))
-        
+
         if len(allTemperatureReadings[-1]) < 8:
                 for i in range(8 - len(allTemperatureReadings[-1])):
                    allTemperatureReadings[-1].append("Unused")
@@ -199,7 +201,7 @@ def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
 
         CookTime.append(round(CookTime[-1] + DataCollectFrequency, 2))
         totalTime.append(round(totalTime[-1] + DataCollectFrequency, 2))
-        
+
         queue.put(gasFlow[-1])
         queue.put(allTemperatureReadings[-1])
         queue.put(tempAvg[-1])
@@ -210,7 +212,7 @@ def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
         queue.put(waterUsage[-1])
         queue.put(waterFlow[-1])
         queue.put(gasTotalUsage[-1])
-        
+
         elapsed_time = time.time() - start_time
         sleep_time = max(0, DataCollectFrequency - elapsed_time)
         if elapsed_time > DataCollectFrequency:
@@ -240,7 +242,7 @@ def gasCounter(endDataCollect):
                 gasTallyTotal.value += instantaneous_flow
             with gasFlowRateLock:
                 gasFlowRate.value = instantaneous_flow / DataCollectFrequency
-    
+
             secondTracker = time.time()
             edgeCount = 0
 
@@ -268,7 +270,7 @@ def waterCounter(endDataCollect):
                 waterTallyTotal.value += instantaneous_flow
             with waterFlowRateLock:
                 waterFlowRate.value = instantaneous_flow / DataCollectFrequency
-    
+
             secondTracker = time.time()
             edgeCount = 0
 
@@ -285,7 +287,7 @@ def get_unique_filename(filepath):
     return filepath
 
 class ProgramLoop(Gtk.Window):
-    
+
     def __init__(self, queue):
         super().__init__(title="Looping App")
         self.endDataCollect = Event()
@@ -295,9 +297,9 @@ class ProgramLoop(Gtk.Window):
 
         self.dataProcess = None
         self.queue = queue
-        
+
         GLib.timeout_add(100, self.check_queue)
-        
+
         self.gasFlow = [0]
         self.allTemperatureReadings = [[]]
         self.tempAvg = [0]
@@ -308,11 +310,11 @@ class ProgramLoop(Gtk.Window):
         self.waterUsage = [0]
         self.waterFlow = [0]
         self.gasTotalUsage = [0]
-        
+
         self.motor = digitalio.DigitalInOut(board.D7)
         self.motor.direction = digitalio.Direction.OUTPUT
         self.motor.value = 0
-        
+
         self.gasTotal = 0
         self.fileName = "Test"
 
@@ -320,7 +322,7 @@ class ProgramLoop(Gtk.Window):
         self.add(self.stack)
         self.output_directory = '/home/pengo/VULCAN_FRY/Output'
         self.targetFlowRate = 6
-        
+
 
         self.text_userDataCheck = (
             f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\nuse the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
@@ -331,12 +333,12 @@ class ProgramLoop(Gtk.Window):
         self.text_nameFilelabel1 = (
             f"Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the frier being tested.\nEnter a file name for saving the test in the first box.\nIf the file already exists, it will be overwritten.\nEnter a file directory in the second box.\nIf none is given, the default will be attempted\nEnter the target flow rate in the third box.\nPress Enter to continue."
         )
-        
+
         self.text_motorStartuplabel = "The motors should be turning on.\nIf they do not, end the test and contact the VULCAN_FRY team."
         self.text_motorWindDownlabel = "The motors should be turning off.\nIf they do not, end the test and contact the VULCAN_FRY team."
         self.text_savingDatalabel = "Saving Data..."
         self.text_dataSavelabel = "Data Saved."
-        
+
         self.text_nameFilelabel1_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_nameFilelabel1)}</span>"
         self.text_userDataCheck_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
         self.text_userDataCheck_nowattmeter_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck_nowattmeter)}</span>"
@@ -344,29 +346,29 @@ class ProgramLoop(Gtk.Window):
         self.text_motorWindDownlabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_motorWindDownlabel)}</span>"
         self.text_savingDatalabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_savingDatalabel)}</span>"
         self.text_dataSavelabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_dataSavelabel)}</span>"
-        
+
         # Screen 1: Naming the file
         self.nameFile1 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
         self.nameFile1.set_vexpand(True)
         self.nameFile1.set_valign(Gtk.Align.START)
-        
+
         self.nameFilelabel1 = Gtk.Label()
         self.nameFilelabel1.set_markup(self.text_nameFilelabel1_markup)
         self.nameFilelabel1.set_line_wrap(True)
         self.nameFilelabel1.set_xalign(0)
         self.nameFilelabel1.set_yalign(0)
-        
+
         self.nameFileEntry1 = Gtk.Entry()
         self.nameFileEntry1.connect("key-press-event", self.saveFileName1)
 
         self.targetFlowRate1 = Gtk.Entry()
         self.targetFlowRate1.connect("key-press-event", self.saveFileName1)
-        
+
         self.nameFile1.pack_start(self.nameFileEntry1, False, False, 10)
         self.nameFile1.pack_start(self.targetFlowRate1, False, False, 10)
         self.nameFile1.pack_start(self.nameFilelabel1, False, False, 10)
-        
-        self.stack.add_named(self.nameFile1, "nameFile1")      
+
+        self.stack.add_named(self.nameFile1, "nameFile1")
 
         # Screen 2: Waits for user input to begin test
         self.waitToBegin2 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
@@ -420,7 +422,7 @@ class ProgramLoop(Gtk.Window):
 
         self.dataCollectionlabelDetailedValues = Gtk.Label(label="")
         self.dataCollectionlabelDetailedValues.set_line_wrap(True)
-        
+
         self.dataCollectionlabelDetailedTemps = Gtk.Label(label="")
         self.dataCollectionlabelDetailedTemps.set_line_wrap(True)
 
@@ -494,26 +496,34 @@ class ProgramLoop(Gtk.Window):
         self.stack.add_named(self.dataSaved9, "dataSaved9")
 
     def saveFileName1(self, widget, event):
-        
+
         self.targetFlowRate = targetFlowRateDefault
         self.fileName = "Test"
-        try:
-            self.I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
-            self.ads = ADS.ADS1115(i2c = self.I2C, address = 0x77, gain = 1) # Requires ADS1115 to run
-            self.ds3502 = adafruit_ds3502.DS3502(i2c = self.I2C, address = 0x76)
-            self.wattChan = AnalogIn(self.ads, ADS.P0) # Requires ADS1115 to run
-            flagADS1115 = True
-            flagDS3502 = True
+        #try:
+        self.I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
+        self.ads = ADS.ADS1115(i2c = self.I2C, address = 0x48, gain = 1) # Requires ADS11 to run
+        self.wattChan = AnalogIn(self.ads, ADS.P0) # Requires ADS1115 to run
+        flagADS1115 = True
+        print(self.I2C)
+        """
         except:
             class WattChanFallback:
                 @property
                 def value(self):
                     return -1
             flagADS1115 = False
-            flagDS3502 = False
-
             self.wattChan = WattChanFallback()
             self.detectWattSensor = False
+            print(flagADS1115)
+        """
+        try:
+            self.I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
+            print(self.I2C)
+            self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = 0x28)
+            flagDS3502 = True
+            print(flagDS3502)
+        except:
+            flagDS3502 = False
         with gasTallyTotal.get_lock():
             gasTallyTotal.value = 0.00
         with waterTallyTotal.get_lock():
@@ -531,13 +541,13 @@ class ProgramLoop(Gtk.Window):
                 self.waitToBeginlabel.set_markup(self.text_userDataCheck_markup)
             else:
                 self.waitToBeginlabel.set_markup(self.text_userDataCheck_nowattmeter_markup)
-        
+
     def beginTest(self, *args):
         self.stack.set_visible_child_name("motorStartup3")
         GPIO.output(motor_1, GPIO.HIGH)
         GPIO.output(motor_2, GPIO.HIGH)
         GLib.timeout_add(5000, self.startDataCollection)
-        
+
     def startDataCollection(self):
         self.queue.put(self.gasFlow)
         self.queue.put(self.allTemperatureReadings)
@@ -567,20 +577,20 @@ class ProgramLoop(Gtk.Window):
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.targetFlowRate, self.endDataCollect, -1), daemon=True
             )
-        
+
         self.dataProcess.start()
         self.GasProcess.start()
         self.WaterProcess.start()
         self.ControlProcess.start()
         self.stack.set_visible_child_name("dataCollection4")
         return False
-    
+
     def swapToDetailed(self, *args):
         self.stack.set_visible_child_name("dataCollection4_2")
 
     def swapToSimple(self, *args):
         self.stack.set_visible_child_name("dataCollection4")
-        
+
     def check_queue(self):
         while not self.queue.empty():
             self.gasFlow.append(self.queue.get())
@@ -626,9 +636,9 @@ class ProgramLoop(Gtk.Window):
             self.dataCollectionlabelDetailedValues.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedValues)}</span>")
             self.dataCollectionlabelDetailedTemps.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedTemps)}</span>")
             self.dataCollectionlabelSimple.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateSimple)}</span>")
-            
-        return True 
-        
+
+        return True
+
     def endTest(self, *args):
         GPIO.output(motor_1, GPIO.LOW)
         GPIO.output(motor_2, GPIO.LOW)
@@ -644,14 +654,14 @@ class ProgramLoop(Gtk.Window):
         self.stack.set_visible_child_name("motorWindDown5")
         self.motor.value = 0
         GLib.timeout_add(5000, self.continueTestingQuerry)
-        
+
     def continueTestingQuerry(self):
         self.stack.set_visible_child_name("continueTestingQuerry6")
         return False
-        
+
     def saveDataQuerry(self, *args):
         self.stack.set_visible_child_name("saveDataQuerry7")
-        
+
     def saveData(self, *args):
 
         directory = filedialog.askdirectory(title="Save Test")
@@ -662,7 +672,7 @@ class ProgramLoop(Gtk.Window):
             return None
 
         self.stack.set_visible_child_name("savingData8")
-        
+
         initial_path = os.path.join(directory, self.fileName)
         file_path = get_unique_filename(initial_path)
         header = [
@@ -696,10 +706,10 @@ class ProgramLoop(Gtk.Window):
                     self.gasTotalUsage[i],
                     self.waterFlow[i]
                 ] + temp_readings)
-                
+
         self.stack.set_visible_child_name("dataSaved9")
         GLib.timeout_add(5000, self.resetProgram)
-        
+
     def resetProgram(self, *args):
         self.gasFlow = []
         self.tempAvg = []
@@ -713,8 +723,8 @@ class ProgramLoop(Gtk.Window):
         self.waterFlow = []
         self.stack.set_visible_child_name("nameFile1")
         return False
-        
-        
+
+
 def main():
     global gasFlow, tempAvg, wattage, totalTime, CookTime, gasUsage, gasTotalUsage
     global gasAnalogIn, max31855, wattChan
@@ -736,7 +746,7 @@ def main():
 
     except:
         None
-    
+
     """
     try:
         I2C = busio.I2C(board.SCL, board.SDA)   # Set up the Wattage Sensor
@@ -768,6 +778,6 @@ def main():
     app.show_all()
     Gtk.main()
     GPIO.cleanup()
-    
+
 if __name__ == "__main__":
     main()
