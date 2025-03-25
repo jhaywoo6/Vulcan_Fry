@@ -1,0 +1,36 @@
+import time
+import board
+import busio
+import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
+
+# Constants
+ADC_GAIN = 1  # Adjust gain if needed based on your SCT-013 model
+VOLTAGE_REF = 4.096  # Voltage reference for ADS1115 with gain=1
+BIT_RESOLUTION = 32768.0  # 16-bit ADC (ADS1115 is 15-bit with signed values)
+BURDEN_RESISTOR = 10.0  # Ohms (Check the burden resistor used)
+SCT_RATIO = 100.0  # SCT-013-000 is 100A:50mA (Adjust for your model)
+
+# Initialize I2C bus and ADC
+i2c = busio.I2C(board.SCL, board.SDA)
+adc = ADS.ADS1115(i2c)
+
+# Set differential reading between A0 (red) and A1 (white)
+chan = AnalogIn(adc, ADS.P0, ADS.P1)
+
+def read_current():
+    raw_vrms = 0.0
+    samples = 500  # Number of samples for averaging
+    for _ in range(samples):
+        voltage = chan.voltage
+        raw_vrms += voltage ** 2
+    
+    vrms = (raw_vrms / samples) ** 0.5  # Calculate RMS voltage
+    current = (vrms / BURDEN_RESISTOR) * SCT_RATIO  # Convert to current
+    return current/17.8
+
+if __name__ == "__main__":
+    while True:
+        current = read_current()
+        print(f"Current: {current:.2f} A")
+        time.sleep(1)
