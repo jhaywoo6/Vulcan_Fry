@@ -18,11 +18,11 @@ import gi
 import time
 import tkinter as tk
 from tkinter import filedialog
-from gi.repository import Gtk, GLib, Gdk
 import RPi.GPIO as GPIO
 from time import sleep
 
 gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GLib, Gdk
 
 # Code Parameters. These control various aspects of the program.
 # When modifying pins, unplug all wires connecting to the gpio pins. 
@@ -130,7 +130,7 @@ def flowControl(target, endDataCollect, ds3502):
         flagDS3502 = False
     
 
-def getData(queue, totalTime, endDataCollect, wattChan):
+def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
     try:
         Temperature = adafruit_max31855.MAX31855(SCK, CS, S0, T0, T1, T2)
         flagMAX31855 = True
@@ -289,7 +289,7 @@ class ProgramLoop(Gtk.Window):
     def __init__(self, queue):
         super().__init__(title="Looping App")
         self.endDataCollect = Event()
-        self.set_default_size(resolution)
+        self.set_default_size(*resolution)
         self.set_resizable(False)
         self.set_border_width(8)
 
@@ -323,41 +323,23 @@ class ProgramLoop(Gtk.Window):
         
 
         self.text_userDataCheck = (
-            """Press the button to begin the test.\n
-            This should start and run the motors for the duration of the test.\n
-            If the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\n
-            Do not attempt another test and contact the VULCAN_FRY team for assistance.\n
-            File Name: {self.fileName}\n
-            Target Flow Rate: {self.targetFlowRate}"""
-        )
-        self.text_nameFilelabel1 = (
-            """Welcome to the simulated ASTM F1361 test apparatus.\n
-            Please read the user manual prior to setting up this test.\n
-            Ensure that the sensors are affixed to the frier being tested.\n
-            Enter a file name for saving the test in the first box.\n
-            If the file already exists, it will be overwritten.\n
-            Enter a file directory in the second box.\n
-            If none is given, the default will be attempted\n
-            Enter the target flow rate in the third box.\n
-            Press Enter to continue."""
+            f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\nuse the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
         )
         self.text_userDataCheck_nowattmeter = (
-            """Warning: Wattmeter is not connected correctly. Please check the wiring and hit cancel if this is unintentional.\n\n
-            
-            Press \"Begin Test\" to begin the test.\nThis should start and run the motors for the duration of the test.\n
-            If the motors are running outside of the test, use the switches in the electrical cabinet to turn them off.\n
-            Do not attempt another test and contact the VULCAN_FRY team for assistance.\n
-            File Name: {self.fileName}\n
-            Target Flow Rate: {self.targetFlowRate}"""
-            )
-        self.text_motorStartuplabel = "The motors should be turning on. If they do not, end the test and contact the VULCAN_FRY team."
-        self.text_motorWindDownlabel = "The motors should be turning off. If they do not, end the test and contact the VULCAN_FRY team."
+            f"Warning: Wattmeter is not connected correctly. Please check the wiring and hit cancel if this is unintentional.\n\nPress \"Begin Test\" to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\nuse the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
+        )
+        self.text_nameFilelabel1 = (
+            f"Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the frier being tested.\nEnter a file name for saving the test in the first box.\nIf the file already exists, it will be overwritten.\nEnter a file directory in the second box.\nIf none is given, the default will be attempted\nEnter the target flow rate in the third box.\nPress Enter to continue."
+        )
+        
+        self.text_motorStartuplabel = "The motors should be turning on.\nIf they do not, end the test and contact the VULCAN_FRY team."
+        self.text_motorWindDownlabel = "The motors should be turning off.\nIf they do not, end the test and contact the VULCAN_FRY team."
         self.text_savingDatalabel = "Saving Data..."
         self.text_dataSavelabel = "Data Saved."
         
-        self.text_userDataCheck_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
         self.text_nameFilelabel1_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_nameFilelabel1)}</span>"
-        self.text_userDataCheck_nowattmeter_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_nameFilelabel_nowattmeter)}</span>"
+        self.text_userDataCheck_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
+        self.text_userDataCheck_nowattmeter_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck_nowattmeter)}</span>"
         self.text_motorStartuplabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_motorStartuplabel)}</span>"
         self.text_motorWindDownlabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_motorWindDownlabel)}</span>"
         self.text_savingDatalabel_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_savingDatalabel)}</span>"
@@ -546,10 +528,9 @@ class ProgramLoop(Gtk.Window):
                 self.targetFlowRate = self.targetFlowRate
             self.stack.set_visible_child_name("waitToBegin2")
             if detectWattSensor:
-                self.userDataCheck.set_markup(self.text_userDataCheck_markup)
+                self.waitToBeginlabel.set_markup(self.text_userDataCheck_markup)
             else:
-                self.userDataCheck.set_markup(self.text_userDataCheck_nowattmeter_markup)
-            self.waitToBeginlabel.set_text(self.userDataCheck)
+                self.waitToBeginlabel.set_markup(self.text_userDataCheck_nowattmeter_markup)
         
     def beginTest(self, *args):
         self.stack.set_visible_child_name("motorStartup3")
@@ -570,7 +551,7 @@ class ProgramLoop(Gtk.Window):
         self.queue.put(self.gasTotalUsage)
         self.endDataCollect.clear()
         self.dataProcess = multiprocessing.Process(
-            target=getData, args=(self.queue, totalTime, self.endDataCollect, self.wattChan), daemon=True
+            target=getData, args=(self.queue, totalTime, self.endDataCollect, self.wattChan, DataCollectFrequency), daemon=True
         )
         self.GasProcess = multiprocessing.Process(
             target=gasCounter, args=(self.endDataCollect, ), daemon=True
