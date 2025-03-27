@@ -54,6 +54,7 @@ VOLTAGE_REF = 4.096 #V
 BIT_RESOLUTION = 32768.0 #16-Bit ADC
 BURDEN_RESISTOR = 10.0 #Ohms
 SCT_RATIO = 100.0 #100A:50mA
+VOLTAGE_SUPPLY = 120.0
 
 # Gas Input
 # Pin # 31 (Pin 29 might be busted, check later. I made Gas and Water Identical for the next time this is checked)
@@ -136,7 +137,7 @@ def flowControl(target, endDataCollect, ds3502):
     except:
         flagDS3502 = False
 
-def read_current(chan):
+def read_power(chan):
     raw_vrms = 0.0
     samples = 500  # Number of samples for averaging
     for _ in range(samples):
@@ -145,7 +146,8 @@ def read_current(chan):
     
     vrms = (raw_vrms / samples) ** 0.5  # Calculate RMS voltage
     current = (vrms / BURDEN_RESISTOR) * SCT_RATIO  # Convert to current
-    return current/17.8
+    power = VOLTAGE_SUPPLY * current/17.8
+    return power
 
 
 def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
@@ -191,7 +193,7 @@ def getData(queue, totalTime, endDataCollect, wattChan, DataCollectFrequency):
 
         # tempAvg.append(Temperature.get_thermocouple_temp() * 9 / 5 + 32)
         # Temperature.get_thermocouple_temp()
-        wattage.append(round(read_current(wattChan))) # Requires ADS1115 to run
+        wattage.append(round(read_power(wattChan))) # Requires ADS1115 to run
 
 
         temperatureReadings = []
