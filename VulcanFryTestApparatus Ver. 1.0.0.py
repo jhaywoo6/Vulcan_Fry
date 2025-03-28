@@ -4,19 +4,17 @@ import gpiozero
 import board
 import digitalio
 import busio
-import adafruit_ads1x15.ads1115 as ADS
-import adafruit_ds3502
+import adafruit_ads1x15.ads1115 as ADS # sudo pip3 install adafruit-circuitpython-ads1x15 --break-system-packages
+import adafruit_ds3502 # sudo pip3 install adafruit-circuitpython-ds3502 --break-system-packages
 import adafruit_max31855 # sudo pip3 install adafruit-circuitpython-max31855 --break-system-packages
 import RPi.GPIO as GPIO
 from adafruit_ads1x15.analog_in import AnalogIn
 from time import sleep
 import os
-from os import system
 from ctypes import c_double
 import csv
 import gi
 import time
-import tkinter as tk
 from tkinter import filedialog
 import RPi.GPIO as GPIO
 from time import sleep
