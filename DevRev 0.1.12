@@ -350,7 +350,7 @@ def totalTimeTracker(endDataCollect):
 
 def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperature):
     try:
-        Temperature = adafruit_max31855.MAX31855(SCK, CS, S0, T0, T1, T2)
+        Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
         print("MAX31855 is connected")
     except:
         print("MAX31855 is not connected")
@@ -691,7 +691,7 @@ class programLoop(Gtk.Window):
                 print("DS3502 is not connected")
 
             try:
-                self.Temperature = adafruit_max31855.MAX31855(SCK, CS, S0, T0, T1, T2)
+                self.Temperature = MAX31855(SCK, CS, S0, T0, T1, T2)
                 print("MAX31855 is connected")
             except:
                 self.Temperature = -1
