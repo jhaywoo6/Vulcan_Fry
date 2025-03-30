@@ -92,7 +92,7 @@ returnFarenheit = True # Returns Celsius
 # Collects data every DataCollectionFrequency seconds.
 # Note: getData is unoptimized and slow, lower values may be auto adjusted to the speed of getData.
 
-DataCollectionFrequency = 1
+DataCollectionFrequency = 0.1
 
 # Tracks totals and rates for gas and water usage
 
@@ -110,7 +110,7 @@ totalTime = Value(c_double, 0.00)
 totalTimeLock = Lock()
 
 dataListMaxLength = 2147483647 # Attempts to prevent memory overflow by limiting list size. memory overflow can freeze the program or create a file too large to save, resulting in test data loss. Modify with care and expected use time, or modify program to check for avalible ram.
-resolution = 800, 480
+resolution = 800, 428
 defaultFileName = "Test"
 
 # Install into a seperate file later
@@ -142,134 +142,134 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 """
 
 class MAX31855:
-	"""
-	Initializes GPIO pins and instance variables.
-	CS initializes to high because it is active low.
-	SO is an input pin.
+    """
+    Initializes GPIO pins and instance variables.
+    CS initializes to high because it is active low.
+    SO is an input pin.
 
-	:param SCK: the BCM pin number of the SCK line
-	:param CS: the BCM pin number of the CS line
-	:param SO: the BCM pin number of the SO line
-	:param T0: the BCM pin number of the T0 line
-	:param T1: the BCM pin number of the T1 line
-	:param T2: the BCM pin number of the T2 line
-	"""
-	def __init__(self, SCK, CS, SO, T0, T1, T2):
-		GPIO.setmode(GPIO.BCM)
-		# Setup all of the GPIO pins
-		for pin_number in [SCK, T0, T1, T2]:
-			GPIO.setup(pin_number, GPIO.OUT)
-			GPIO.output(pin_number, 0)
-		GPIO.setup(CS, GPIO.OUT)
-		GPIO.output(CS, 1)
-		GPIO.setup(SO, GPIO.IN)
-		# Initialize instance variables
-		self.SCK = SCK
-		self.CS = CS
-		self.SO = SO
-		self.T0 = T0
-		self.T1 = T1
-		self.T2 = T2
-		# Initialize the poll data to zero
-		self.latest_data = 0b0
+    :param SCK: the BCM pin number of the SCK line
+    :param CS: the BCM pin number of the CS line
+    :param SO: the BCM pin number of the SO line
+    :param T0: the BCM pin number of the T0 line
+    :param T1: the BCM pin number of the T1 line
+    :param T2: the BCM pin number of the T2 line
+    """
+    def __init__(self, SCK, CS, SO, T0, T1, T2):
+        GPIO.setmode(GPIO.BCM)
+        # Setup all of the GPIO pins
+        for pin_number in [SCK, T0, T1, T2]:
+            GPIO.setup(pin_number, GPIO.OUT)
+            GPIO.output(pin_number, 0)
+        GPIO.setup(CS, GPIO.OUT)
+        GPIO.output(CS, 1)
+        GPIO.setup(SO, GPIO.IN)
+        # Initialize instance variables
+        self.SCK = SCK
+        self.CS = CS
+        self.SO = SO
+        self.T0 = T0
+        self.T1 = T1
+        self.T2 = T2
+        # Initialize the poll data to zero
+        self.latest_data = 0b0
 
-	"""
-	Communicates with the octo MAX31855 board to retrieve
-	temperature and fault data. The data is stored in
-	self.latest_data for later reference.
+    """
+    Communicates with the octo MAX31855 board to retrieve
+    temperature and fault data. The data is stored in
+    self.latest_data for later reference.
 
-	:param therm_id: id of the thermocouple (0 - 7)
-	"""
-	def read_data(self, therm_id):
-		# Select the thermocouple using multiplexer
-		GPIO.output(self.T2, therm_id & 0b100)
-		GPIO.output(self.T1, therm_id & 0b10)
-		GPIO.output(self.T0, therm_id & 0b1)
-		# Wait for the multiplexer to update
-		sleep(0.125)
-		# Select the chip and record incoming data
-		data = 0b0
-		GPIO.output(self.CS, 0)
-		# Shift in 32 bits of data
-		for bitshift in reversed(range(0, 32)):
-			GPIO.output(self.SCK, 1)
-			data += GPIO.input(self.SO) << bitshift
-			GPIO.output(self.SCK, 0)
-		GPIO.output(self.CS, 1)
-		self.latest_data = data
+    :param therm_id: id of the thermocouple (0 - 7)
+    """
+    def read_data(self, therm_id):
+        # Select the thermocouple using multiplexer
+        GPIO.output(self.T2, therm_id & 0b100)
+        GPIO.output(self.T1, therm_id & 0b10)
+        GPIO.output(self.T0, therm_id & 0b1)
+        # Wait for the multiplexer to update
+        sleep(0.125)
+        # Select the chip and record incoming data
+        data = 0b0
+        GPIO.output(self.CS, 0)
+        # Shift in 32 bits of data
+        for bitshift in reversed(range(0, 32)):
+            GPIO.output(self.SCK, 1)
+            data += GPIO.input(self.SO) << bitshift
+            GPIO.output(self.SCK, 0)
+        GPIO.output(self.CS, 1)
+        self.latest_data = data
 
-	"""
-	Gets the temperature of the most recently polled
-	thermocouple.
+    """
+    Gets the temperature of the most recently polled
+    thermocouple.
 
-	:returns: float representing the temperature in celsius
-	"""
-	def get_thermocouple_temp(self, returnFarenheit):
-		data = self.latest_data
-		# Select appropriate bits
-		data = data >> 18
-		# Handle twos complement
-		if data >= 0x2000:
-			data = -((data ^ 0x3fff) + 1)
+    :returns: float representing the temperature in celsius
+    """
+    def get_thermocouple_temp(self, returnFarenheit):
+        data = self.latest_data
+        # Select appropriate bits
+        data = data >> 18
+        # Handle twos complement
+        if data >= 0x2000:
+            data = -((data ^ 0x3fff) + 1)
         # Divide by 4 to handle fractional component
         celsius = data / 4
         if returnFarenheit:
             return (celsius * 9 / 5) + 32  # Convert to Fahrenheit if requested
         return celsius
 
-	"""
-	Gets the temperature of the reference junction from
-	the most recent poll.
+    """
+    Gets the temperature of the reference junction from
+    the most recent poll.
 
-	:returns: float representing the temperature in celsius
-	"""
-	def get_reference_temp(self):
-		data = self.latest_data
-		# Select appropriate bits
-		data = (data & 0xfff0) >> 4
-		# Handle twos complement
-		if data & 0x800:
-			data = -((data ^ 0xfff) + 1)
-		# Divide by 16 to handle fractional component
-		return data / 16
+    :returns: float representing the temperature in celsius
+    """
+    def get_reference_temp(self):
+        data = self.latest_data
+        # Select appropriate bits
+        data = (data & 0xfff0) >> 4
+        # Handle twos complement
+        if data & 0x800:
+            data = -((data ^ 0xfff) + 1)
+        # Divide by 16 to handle fractional component
+        return data / 16
 
-	"""
-	Returns a value signififying a particular fault in the most
-	recent poll.
+    """
+    Returns a value signififying a particular fault in the most
+    recent poll.
 
-	0 indicates that no faults exist
-	1 indicates an SCV fault (thermocouple is shorted to VCC)
-	2 indicates an SCG fault (thermocouple is shorted to GND)
-	3 indicates an OC fault (the thermocouple is not connected)
+    0 indicates that no faults exist
+    1 indicates an SCV fault (thermocouple is shorted to VCC)
+    2 indicates an SCG fault (thermocouple is shorted to GND)
+    3 indicates an OC fault (the thermocouple is not connected)
 
-	:returns: an integer representing the fault
-	"""
-	def get_faults(self):
-		data = self.latest_data
-		if data & 0x00010000:
-			if data & 0b100:
-				return 1
-			if data & 0b10:
-				return 2
-			if data & 0b1:
-				return 3
-		return 0
+    :returns: an integer representing the fault
+    """
+    def get_faults(self):
+        data = self.latest_data
+        if data & 0x00010000:
+            if data & 0b100:
+                return 1
+            if data & 0b10:
+                return 2
+            if data & 0b1:
+                return 3
+        return 0
 
-	"""
-	Should be called at the end of program execution to bring
-	all GPIO pins to a 'safe' state.
-	"""
-	def cleanup(self):
-		GPIO.cleanup()
+    """
+    Should be called at the end of program execution to bring
+    all GPIO pins to a 'safe' state.
+    """
+    def cleanup(self):
+        GPIO.cleanup()
 
 
-	"""
-	Returns the value of latest_data
+    """
+    Returns the value of latest_data
 
-	:returns: the value of latest_data
-	"""
-	def get_latest_data(self):
-		return self.latest_data
+    :returns: the value of latest_data
+    """
+    def get_latest_data(self):
+        return self.latest_data
 
 def readPower(chan):
     rawVrms = 0.0
@@ -394,6 +394,7 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
             data["gasUsage"] = round(gasTally.value, 2)
             data["gasFlow"] = round(gasFlowRate.value, 2)
             data["waterFlow"] = round(waterFlowRate.value, 2)
+            data["waterUsage"] = round(waterTally.value, 2)
             data["gasTotalUsage"] = round(gasTallyTotal.value, 2)
             data["CookTime"] = cookTime.value
             data["totalTime"] = totalTime.value
@@ -763,7 +764,7 @@ class programLoop(Gtk.Window):
     def checkQueue(self):
         while not self.queue.empty():
             self.dataList.append(self.queue.get())
-            print(len(self.dataList))
+            print(self.dataList[-1]['thermocouple no.'])
             if len(self.dataList) >= dataListMaxLength: 
                 self.dataList.pop(0)
 
@@ -771,8 +772,8 @@ class programLoop(Gtk.Window):
                 f"gasFlow: {self.dataList[-1]['gasFlow']} cu ft / sec\n"
                 f"tempAvg: {self.dataList[-1]['tempAvg']} F\n"
                 f"wattage: {self.dataList[-1]['wattage']} W\n"
-                f"CookTime: {self.dataList[-1]['CookTime'], 0} sec\n"
-                f"totalTime: {self.dataList[-1]['totalTime'], 0} sec\n"
+                f"CookTime: {self.dataList[-1]['CookTime']} sec\n"
+                f"totalTime: {self.dataList[-1]['totalTime']} sec\n"
                 f"gasUsage: {self.dataList[-1]['gasUsage']} cu ft\n"
                 f"waterUsage: {self.dataList[-1]['waterUsage']} gal\n"
                 f"waterFlow: {self.dataList[-1]['waterFlow']} gal / sec\n"
@@ -862,7 +863,7 @@ class programLoop(Gtk.Window):
             writer.writerow(header)
 
             for i in range(len(self.dataList)):
-                temperatureReadings = self.dataList[i]["thermocouple no."] if i < len(self.dataList[i]["thermocouple no."]) else [None] * thermoNum
+                temperatureReadings = self.dataList[i]["thermocouple no."]# if i < len(self.dataList[i]["thermocouple no."]) else [None] * thermoNum
 
                 writer.writerow([
                     self.dataList[i]["gasFlow"],
