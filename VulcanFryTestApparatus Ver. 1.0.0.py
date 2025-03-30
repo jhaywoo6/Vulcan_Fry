@@ -442,7 +442,8 @@ class programLoop(Gtk.Window):
         self.nameFile1targetFlowRate = Gtk.Entry()
         self.nameFile1targetFlowRate.connect("key-press-event", self.saveFileName1)
 
-        self.nameFile1targetFlowRatePopover = Gtk.Popover.new(self.nameFile1targetFlowRate)
+        self.nameFile1targetFlowRatePopover = Gtk.Popover()
+        self.nameFile1targetFlowRatePopover.set_relative_to(self.nameFile1targetFlowRate)
         self.nameFile1targetFlowRatePopover.set_position(Gtk.PositionType.BOTTOM)
 
         self.nameFile1targetFlowRateListBox = Gtk.ListBox()
