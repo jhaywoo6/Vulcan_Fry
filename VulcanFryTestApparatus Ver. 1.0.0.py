@@ -512,7 +512,7 @@ class programLoop(Gtk.Window):
             self.text_userDataCheck = (
                 f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\nuse the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
             )
-            self.textUserDataCheckMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
+            self.textUserDataCheckMarkup = f"<span size='large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
             try:
                 self.I2C = busio.I2C(board.SCL, board.SDA)
                 self.ads = ADS.ADS1115(i2c = self.I2C, address = ADSAddress, gain = ADSGain)
