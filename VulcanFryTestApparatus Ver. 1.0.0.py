@@ -336,7 +336,7 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
         if len(data["thermocouple no."]["value"]) < 8:
             data["thermocouple no."]["value"].extend(["Unused"] * (8 - len(data["thermocouple no."]["value"])))
 
-        with params["sensors"]["gas"]["tally"].get_lock(), params["sensors"]["gas"]["flowRate"].get_lock(), params["sensors"]["water"]["tally"].get_lock(), params["sensors"]["water"]["flowRate"].get_lock(), params["sensors"]["gas"]["totalTally"].get_lock(), params["sensors"]["water"]["totalTally"].get_lock(), params["clocks"]["cookTime"]["value"].get_lock(), params["clocks"]["totalTime"].get_lock():
+        with params["sensors"]["gas"]["tally"].get_lock(), params["sensors"]["gas"]["flowRate"].get_lock(), params["sensors"]["water"]["tally"].get_lock(), params["sensors"]["water"]["flowRate"].get_lock(), params["sensors"]["gas"]["totalTally"].get_lock(), params["sensors"]["water"]["totalTally"].get_lock(), params["clocks"]["cookTime"].get_lock(), params["clocks"]["totalTime"].get_lock():
             data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
             data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
             data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
