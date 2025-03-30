@@ -204,15 +204,18 @@ class MAX31855:
 
 	:returns: float representing the temperature in celsius
 	"""
-	def get_thermocouple_temp(self):
+	def get_thermocouple_temp(self, returnFarenheit):
 		data = self.latest_data
 		# Select appropriate bits
 		data = data >> 18
 		# Handle twos complement
 		if data >= 0x2000:
 			data = -((data ^ 0x3fff) + 1)
-		# Divide by 4 to handle fractional component
-		return data / 4
+        # Divide by 4 to handle fractional component
+        celsius = data / 4
+        if returnFarenheit:
+            return (celsius * 9 / 5) + 32  # Convert to Fahrenheit if requested
+        return celsius
 
 	"""
 	Gets the temperature of the reference junction from
