@@ -460,7 +460,7 @@ class programLoop(Gtk.Window):
             row.add(button)
             self.nameFile1targetFlowRateListBox.add(row)
 
-        self.nameFile1targetFlowRateListBox.popup()
+        self.nameFile1targetFlowRateListBox.show_all()
 
         self.nameFile1targetFlowRate.connect("focus-in-event", self.showPopover)
 
@@ -644,7 +644,7 @@ class programLoop(Gtk.Window):
             self.waitToBegin2label.set_markup(self.textUserDataCheckMarkup)
 
     def showPopover(self, widget, event):
-        self.nameFile1targetFlowRatePopover.show_all()
+        self.nameFile1targetFlowRatePopover.popup()
 
     def setTargetFlowRate(self, widget, option):
         self.targetFlowRate = option
