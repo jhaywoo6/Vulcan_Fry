@@ -109,7 +109,7 @@ cookTimeLock = Lock()
 totalTime = Value(c_double, 0.00)
 totalTimeLock = Lock()
 
-dataListMaxLength = 1000000 # Attempts to prevent ram overflow by limiting list size. Ram overflow can freeze the program, resulting in test data loss. 100000 is equivalent to 277 hours of data at default DataCollectionFrequency = 1. Modify with care, or modify program to check for avalible ram.
+dataListMaxLength = 2147483647 # Attempts to prevent memory overflow by limiting list size. memory overflow can freeze the program or create a file too large to save, resulting in test data loss. Modify with care and expected use time, or modify program to check for avalible ram.
 resolution = 800, 480
 defaultFileName = "Test"
 
@@ -213,19 +213,21 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
         "gasTotalUsage": 0
     }
 
-    startTime = time.time()
 
     while not endDataCollect.is_set():
-        data["wattage"] = round(readPower(wattChan))
+        startTime = time.time()
+        try:
+            data["wattage"] = round(readPower(wattChan))
+        except:
+            data["wattage"] = -1
 
         for i in range(thermoNum):
             try:
                 Temperature.read_data(i)
                 data["thermocouple no."][i] = round(Temperature.get_thermocouple_temp(returnFarenheit), 2)
             except:
-                data["thermocouple no."][i] = round(-1, 2)
-
-        data["tempAvg"] = round(np.mean(data["thermocouple no."]), 2)
+                data["thermocouple no."][i] = -1
+        data["tempAvg"] = round(np.mean(data["thermocouple no."][0:thermoNum]), 2)
 
         if len(data["thermocouple no."]) < 8:
             data["thermocouple no."].extend(["Unused"] * (8 - len(data["thermocouple no."])))
@@ -233,19 +235,18 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
         with gasTally.get_lock(), gasFlowRate.get_lock(), waterTally.get_lock(), waterFlowRate.get_lock(), gasTallyTotal.get_lock(), cookTime.get_lock(), totalTime.get_lock():
             data["gasUsage"] = round(gasTally.value, 2)
             data["gasFlow"] = round(gasFlowRate.value, 2)
-            data["waterUsage"] = round(waterTally.value, 2)
             data["waterFlow"] = round(waterFlowRate.value, 2)
             data["gasTotalUsage"] = round(gasTallyTotal.value, 2)
-            data["CookTime"] = round(cookTime.value, 2)
-            data["totalTime"] = round(totalTime.value, 2)
+            data["CookTime"] = cookTime.value
+            data["totalTime"] = totalTime.value
 
         queue.put(data)
         elapsedTime = time.time() - startTime
-        sleepTime = max(0, DataCollectionFrequency - elapsedTime)
         if elapsedTime > DataCollectionFrequency:
             DataCollectionFrequency = elapsedTime
             print(f"DataCollectionFrequency adjusted to {DataCollectionFrequency}. Optimizations needed to reach requested rate.")
-        time.sleep(sleepTime)
+        sleepTime = max(0, DataCollectionFrequency)
+        time.sleep(DataCollectionFrequency)
 
 def gasCounter(endDataCollect):
     edgeCount = 0
@@ -364,11 +365,11 @@ class programLoop(Gtk.Window):
         self.nameFile1Entry = Gtk.Entry()
         self.nameFile1Entry.connect("key-press-event", self.saveFileName1)
 
-        self.targetFlowRate = Gtk.Entry()
-        self.targetFlowRate.connect("key-press-event", self.saveFileName1)
+        self.nameFile1targetFlowRate = Gtk.Entry()
+        self.nameFile1targetFlowRate.connect("key-press-event", self.saveFileName1)
 
         self.nameFile1.pack_start(self.nameFile1Entry, False, False, 10)
-        self.nameFile1.pack_start(self.targetFlowRate, False, False, 10)
+        self.nameFile1.pack_start(self.nameFile1targetFlowRate, False, False, 10)
         self.nameFile1.pack_start(self.nameFile1label, False, False, 10)
 
         self.stack.add_named(self.nameFile1, "nameFile1")
@@ -499,40 +500,47 @@ class programLoop(Gtk.Window):
         self.stack.add_named(self.dataSaved9, "dataSaved9")
 
     def saveFileName1(self, widget, event):
-        try:
-            self.I2C = busio.I2C(board.SCL, board.SDA)
-            self.ads = ADS.ADS1115(i2c = self.I2C, address = ADSAddress, gain = ADSGain)
-            self.wattChan = AnalogIn(self.ads, ADS.P0, ADS.P1)
-            print("ADS1115 is connected")
-        except:
-            class WattChanFallback:
-                @property
-                def value(self):
-                    return -1
-            self.wattChan = WattChanFallback()
-            print("ADS1115 is not connected")
-
-        try:
-            self.I2C = busio.I2C(board.SCL, board.SDA)
-            self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = DSAddress)
-            print("DS3502 is connected")
-        except:
-            print("DS3502 is not connected")
-
-        try:
-            self.Temperature = adafruit_max31855.MAX31855(SCK, CS, S0, T0, T1, T2)
-            print("MAX31855 is connected")
-        except:
-            print("MAX31855 is not connected")
 
         if event.keyval == Gdk.KEY_Return:
             if self.nameFile1Entry.get_text().strip():
                 self.fileName = self.nameFile1Entry.get_text()
 
             try:
-                self.targetFlowRate = float(self.targetFlowRate.get_text())
+                self.targetFlowRate = float(self.nameFile1targetFlowRate.get_text())
             except ValueError:
-                self.targetFlowRate = self.targetFlowRate
+                self.targetFlowRate = targetFlowRateDefault
+            self.text_userDataCheck = (
+                f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\nuse the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
+            )
+            self.textUserDataCheckMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
+            try:
+                self.I2C = busio.I2C(board.SCL, board.SDA)
+                self.ads = ADS.ADS1115(i2c = self.I2C, address = ADSAddress, gain = ADSGain)
+                self.wattChan = AnalogIn(self.ads, ADS.P0, ADS.P1)
+                print("ADS1115 is connected")
+            except:
+                class WattChanFallback:
+                    @property
+                    def value(self):
+                        return -1
+                    def voltage(self):
+                        return -1
+                self.wattChan = WattChanFallback()
+                print("ADS1115 is not connected")
+
+            try:
+                self.I2C = busio.I2C(board.SCL, board.SDA)
+                self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = DSAddress)
+                print("DS3502 is connected")
+            except:
+                print("DS3502 is not connected")
+
+            try:
+                self.Temperature = adafruit_max31855.MAX31855(SCK, CS, S0, T0, T1, T2)
+                print("MAX31855 is connected")
+            except:
+                self.Temperature = -1
+                print("MAX31855 is not connected")
 
             self.stack.set_visible_child_name("waitToBegin2")
             self.waitToBegin2label.set_markup(self.textUserDataCheckMarkup)
@@ -597,7 +605,7 @@ class programLoop(Gtk.Window):
     def checkQueue(self):
         while not self.queue.empty():
             self.dataList.append(self.queue.get())
-
+            print(len(self.dataList))
             if len(self.dataList) >= dataListMaxLength: 
                 self.dataList.pop(0)
 
@@ -605,8 +613,8 @@ class programLoop(Gtk.Window):
                 f"gasFlow: {self.dataList[-1]['gasFlow']} cu ft / sec\n"
                 f"tempAvg: {self.dataList[-1]['tempAvg']} F\n"
                 f"wattage: {self.dataList[-1]['wattage']} W\n"
-                f"CookTime: {self.dataList[-1]['CookTime']} sec\n"
-                f"totalTime: {self.dataList[-1]['totalTime']} sec\n"
+                f"CookTime: {round(self.dataList[-1]['CookTime'])} sec\n"
+                f"totalTime: {round(self.dataList[-1]['totalTime'])} sec\n"
                 f"gasUsage: {self.dataList[-1]['gasUsage']} cu ft\n"
                 f"waterUsage: {self.dataList[-1]['waterUsage']} gal\n"
                 f"waterFlow: {self.dataList[-1]['waterFlow']} gal / sec\n"
