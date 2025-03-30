@@ -613,8 +613,8 @@ class programLoop(Gtk.Window):
                 f"gasFlow: {self.dataList[-1]['gasFlow']} cu ft / sec\n"
                 f"tempAvg: {self.dataList[-1]['tempAvg']} F\n"
                 f"wattage: {self.dataList[-1]['wattage']} W\n"
-                f"CookTime: {round(self.dataList[-1]['CookTime'])} sec\n"
-                f"totalTime: {round(self.dataList[-1]['totalTime'])} sec\n"
+                f"CookTime: {self.dataList[-1]['CookTime'], 0} sec\n"
+                f"totalTime: {self.dataList[-1]['totalTime'], 0} sec\n"
                 f"gasUsage: {self.dataList[-1]['gasUsage']} cu ft\n"
                 f"waterUsage: {self.dataList[-1]['waterUsage']} gal\n"
                 f"waterFlow: {self.dataList[-1]['waterFlow']} gal / sec\n"
@@ -635,8 +635,8 @@ class programLoop(Gtk.Window):
             dataUpdateSimple = (
                 f"Temperature Average: {self.dataList[-1]['tempAvg']} F\n"
                 f"Wattage: {self.dataList[-1]['wattage']} W\n"
-                f"Cook Time: {self.dataList[-1]['CookTime']} sec\n"
-                f"Total Time: {self.dataList[-1]['totalTime']} sec\n"
+                f"Cook Time: {round(self.dataList[-1]['CookTime'], 0)} sec\n"
+                f"Total Time: {round(self.dataList[-1]['totalTime'], 0)} sec\n"
                 f"Gas Usage: {self.dataList[-1]['gasUsage']} cu ft\n"
                 f"Water Flow: {self.dataList[-1]['waterFlow']} gal/sec\n"
             )
