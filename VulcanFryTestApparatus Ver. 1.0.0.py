@@ -160,7 +160,7 @@ class MAX31855:
 
     :returns: float representing the temperature in celsius
     """
-    def get_thermocouple_temp(self, returnFarenheit=false):
+    def get_thermocouple_temp(self, returnFarenheit=False):
         data = self.latest_data
         # Select appropriate bits
         data = data >> 18
