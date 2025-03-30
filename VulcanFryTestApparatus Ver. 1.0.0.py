@@ -221,23 +221,23 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
         for i in range(thermoNum):
             try:
                 Temperature.read_data(i)
-                data("thermocouple no.")(i) = round(Temperature.get_thermocouple_temp(returnFarenheit), 2)
+                data["thermocouple no."][i] = round(Temperature.get_thermocouple_temp(returnFarenheit), 2)
             except:
-                data("thermocouple no.")(i) = round(-1, 2)
+                data["thermocouple no."][i] = round(-1, 2)
 
-        data("tempAvg") = round(np.mean(data("thermocouple no.")), 2)
+        data["tempAvg"] = round(np.mean(data["thermocouple no."]), 2)
 
-        if len(data("thermocouple no.")) < 8:
-            data("thermocouple no.").extend(["Unused"] * (8 - len(data("thermocouple no."))))
+        if len(data["thermocouple no."]) < 8:
+            data["thermocouple no."].extend(["Unused"] * (8 - len(data["thermocouple no."])))
 
         with gasTally.get_lock(), gasFlowRate.get_lock(), waterTally.get_lock(), waterFlowRate.get_lock(), gasTallyTotal.get_lock(), cookTime.get_lock(), totalTime.get_lock():
-            data("gasUsage") = round(gasTally.value, 2)
-            data("gasFlow") = round(gasFlowRate.value, 2)
-            data("waterUsage") = round(waterTally.value, 2)
-            data("waterFlow") = round(waterFlowRate.value, 2)
-            data("gasTotalUsage") = round(gasTallyTotal.value, 2)
-            data("CookTime") = round(cookTime.value, 2)
-            data("totalTime") = round(totalTime.value, 2)
+            data["gasUsage"] = round(gasTally.value, 2)
+            data["gasFlow"] = round(gasFlowRate.value, 2)
+            data["waterUsage"] = round(waterTally.value, 2)
+            data["waterFlow"] = round(waterFlowRate.value, 2)
+            data["gasTotalUsage"] = round(gasTallyTotal.value, 2)
+            data["CookTime"] = round(cookTime.value, 2)
+            data["totalTime"] = round(totalTime.value, 2)
 
         queue.put(data)
         elapsedTime = time.time() - startTime
@@ -324,6 +324,7 @@ class programLoop(Gtk.Window):
         self.motor.value = 0
 
         self.gasTotal = 0
+        self.fileName = defaultFileName
 
         self.stack = Gtk.Stack()
         self.add(self.stack)
@@ -498,9 +499,6 @@ class programLoop(Gtk.Window):
         self.stack.add_named(self.dataSaved9, "dataSaved9")
 
     def saveFileName1(self, widget, event):
-        self.targetFlowRate = targetFlowRateDefault
-        self.fileName = defaultFileName
-
         try:
             self.I2C = busio.I2C(board.SCL, board.SDA)
             self.ads = ADS.ADS1115(i2c = self.I2C, address = ADSAddress, gain = ADSGain)
@@ -604,33 +602,35 @@ class programLoop(Gtk.Window):
                 self.dataList.pop(0)
 
             dataUpdateDetailedValues = (
-                f"gasFlow: {self.dataList[-1]["gasFlow"]} cu ft / sec\n"
-                f"tempAvg: {self.dataList[-1]["tempAvg"]} F\n"
-                f"wattage: {self.dataList[-1]["wattage"]} W\n"
-                f"CookTime: {self.dataList[-1]["CookTime"]} sec\n"
-                f"totalTime: {self.dataList[-1]["totalTime"]} sec\n"
-                f"gasUsage: {self.dataList[-1]["gasUsage"]} cu ft\n"
-                f"waterUsage: {self.dataList[-1]["waterUsage"]} gal\n"
-                f"waterFlow: {self.dataList[-1]["waterFlow"]} gal / sec\n"
-                f"gasTotalUsage: {self.dataList[-1]["gasTotalUsage"]} cu ft\n"
+                f"gasFlow: {self.dataList[-1]['gasFlow']} cu ft / sec\n"
+                f"tempAvg: {self.dataList[-1]['tempAvg']} F\n"
+                f"wattage: {self.dataList[-1]['wattage']} W\n"
+                f"CookTime: {self.dataList[-1]['CookTime']} sec\n"
+                f"totalTime: {self.dataList[-1]['totalTime']} sec\n"
+                f"gasUsage: {self.dataList[-1]['gasUsage']} cu ft\n"
+                f"waterUsage: {self.dataList[-1]['waterUsage']} gal\n"
+                f"waterFlow: {self.dataList[-1]['waterFlow']} gal / sec\n"
+                f"gasTotalUsage: {self.dataList[-1]['gasTotalUsage']} cu ft\n"
             )
+
             dataUpdateDetailedTemps = (
-                f"Thermocouple 1: {self.dataList[-1]["thermocouple no."][0]} F\n"
-                f"Thermocouple 2: {self.dataList[-1]["thermocouple no."][1]} F\n"
-                f"Thermocouple 3: {self.dataList[-1]["thermocouple no."][2]} F\n"
-                f"Thermocouple 4: {self.dataList[-1]["thermocouple no."][3]} F\n"
-                f"Thermocouple 5: {self.dataList[-1]["thermocouple no."][4]} F\n"
-                f"Thermocouple 6: {self.dataList[-1]["thermocouple no."][5]} F\n"
-                f"Thermocouple 7: {self.dataList[-1]["thermocouple no."][6]} F\n"
-                f"Thermocouple 8: {self.dataList[-1]["thermocouple no."][7]} F\n"
+                f"Thermocouple 1: {self.dataList[-1]['thermocouple no.'][0]} F\n"
+                f"Thermocouple 2: {self.dataList[-1]['thermocouple no.'][1]} F\n"
+                f"Thermocouple 3: {self.dataList[-1]['thermocouple no.'][2]} F\n"
+                f"Thermocouple 4: {self.dataList[-1]['thermocouple no.'][3]} F\n"
+                f"Thermocouple 5: {self.dataList[-1]['thermocouple no.'][4]} F\n"
+                f"Thermocouple 6: {self.dataList[-1]['thermocouple no.'][5]} F\n"
+                f"Thermocouple 7: {self.dataList[-1]['thermocouple no.'][6]} F\n"
+                f"Thermocouple 8: {self.dataList[-1]['thermocouple no.'][7]} F\n"
             )
+
             dataUpdateSimple = (
-                f"Temperature Average: {self.dataList[-1]["tempAvg"]} F\n"
-                f"Wattage: {self.dataList[-1]["wattage"]} W\n"
-                f"Cook Time: {self.dataList[-1]["CookTime"]} sec\n"
-                f"Total Time: {self.dataList[-1]["totalTime"]} sec\n"
-                f"Gas Usage: {self.dataList[-1]["gasUsage"]} cu ft\n"
-                f"Water Flow: {self.dataList[-1]["waterFlow"]} gal/sec\n"
+                f"Temperature Average: {self.dataList[-1]['tempAvg']} F\n"
+                f"Wattage: {self.dataList[-1]['wattage']} W\n"
+                f"Cook Time: {self.dataList[-1]['CookTime']} sec\n"
+                f"Total Time: {self.dataList[-1]['totalTime']} sec\n"
+                f"Gas Usage: {self.dataList[-1]['gasUsage']} cu ft\n"
+                f"Water Flow: {self.dataList[-1]['waterFlow']} gal/sec\n"
             )
             self.dataCollection4DetailedLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedValues)}</span>")
             self.dataCollection4DetailedTemperatureLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedTemps)}</span>")
