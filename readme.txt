@@ -65,7 +65,40 @@ Tapping on the screen will remove the popup.
 
 Maintenence Guide:
 This section is for developers looking to fix/upgrade the program.
-It is recommended to have a basic understanding of python 3.13.2 prior to creating modifications
+It is recommended to have a basic understanding of python 3.13.2 prior to creating modifications.
+This program uses GPIO pins to communicate with other boards specialized in collecting data from sensors. The Raspberry Pi 4B has a 40-pin header. The pinout can be found on the raspberry pi documentation: (ctrl + f "GPIO and the 40-pin header")
+(https://www.raspberrypi.com/documentation/computers/raspberry-pi.html)
+Here is the default pinout in relation to the device it connects with:
+
+MAX31855
+# Pin # 23, 24, 21, 11, 13, 15
+# GPIO # 11, 8, 9, 17, 27, 22
+# SCK, CS, S0, T0, T1, T2
+# MISO
+# Thermocouples wired to this device should be wired from 0 to 7. 
+# If a port can't be used 
+
+ADS1115 & DS3502
+# Pin # 3 5
+# GPIO # 2 3
+# SDA1, SCL1
+# Uses I2C
+# ADSAddress = 0x48
+# DSAddress = 0x28
+
+Gas Input
+# Pin # 31 
+# GPIO # 6
+
+Water Input
+# Pin # 22
+# GPIO # 25
+
+Relay Control
+# Pin # 32 33
+# GPIO # 12, 13
+# Motor 1 and 2
+
 Geany is used to modify and test new versions of the program. It can be found on
 the quick access bar by selecting activities on the top left and looking under the program desktop.
 It appears as a genies lamp.
