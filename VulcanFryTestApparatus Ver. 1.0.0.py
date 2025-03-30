@@ -456,17 +456,16 @@ class programLoop(Gtk.Window):
         for optionLabel, optionValue in params["targetFlowRateOptions"].items():
             row = Gtk.ListBoxRow()
             button = Gtk.Button(label=f"{optionLabel} ({optionValue} gal/sec)")
-            button.connect("clicked", self.setTargetFlowRate, optionValue)
+            button.connect("clicked", lambda btn, value=optionValue: self.setTargetFlowRate(btn, value))
             row.add(button)
             self.nameFile1targetFlowRateListBox.add(row)
 
-        self.nameFile1targetFlowRateListBox.show_all()
+        self.nameFile1targetFlowRateListBox.popup()
 
         self.nameFile1targetFlowRate.connect("focus-in-event", self.showPopover)
 
         self.nameFile1.pack_start(self.nameFile1Entry, False, False, 10)
         self.nameFile1.pack_start(self.nameFile1targetFlowRate, False, False, 10)
-        self.nameFile1.pack_start(self.nameFile1targetFlowRatePopover, False, False, 10)
         self.nameFile1.pack_start(self.nameFile1label, False, False, 10)
 
         self.stack.add_named(self.nameFile1, "nameFile1")
