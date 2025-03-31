@@ -410,7 +410,7 @@ class programLoop(Gtk.Window):
         self.targetFlowRate = params["DS3502"]["targetFlowRateDefault"]
 
         self.text_userDataCheck = (
-            f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\nuse the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
+            f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\npress the physical e-stop button to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
         )
 
         self.text_nameFile1label = (
