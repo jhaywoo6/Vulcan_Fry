@@ -120,7 +120,9 @@ for mor info on how these elements work. (https://python-gtk-3-tutorial.readthed
 
 The program uses Adafruit for communication with the MAX31855, ADS1115, and DS3502 boards.
 Refer to their respective documentation for how they work.
-MAX31855: (https://docs.circuitpython.org/projects/max31855/en/latest/)
+Note the Octo MAX31855 has its own library seperate from adafruit. Do not use the adafruit_max31855
+library with this program.
+MAX31855: (https://github.com/Neem-Tech/Octo-MAX31855-Breakout-Board)
 ADS1115: (https://docs.circuitpython.org/projects/ads1x15/en/latest/)
 DS3502: (https://docs.circuitpython.org/projects/ds3502/en/latest/)
 
