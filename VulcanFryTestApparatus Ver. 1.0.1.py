@@ -465,7 +465,7 @@ class programLoop(Gtk.Window):
         self.nameFile1targetFlowRate.connect("focus-in-event", self.showPopover)
 
         self.nameFile1NextButton = Gtk.Button(label="Next")
-        self.nameFile1NextButton.connect("clicked", lambda btn: self.stack.set_visible_child_name("waitToBegin2"))
+        self.nameFile1NextButton.connect("clicked", self.saveFileName1)
 
         self.nameFile1.pack_start(self.nameFile1Entry, False, False, 10)
         self.nameFile1.pack_start(self.nameFile1targetFlowRate, False, False, 10)
@@ -598,10 +598,10 @@ class programLoop(Gtk.Window):
 
         self.dataSaved9.pack_start(self.dataSave9Label, True, True, 0)
         self.stack.add_named(self.dataSaved9, "dataSaved9")
+    
+    def saveFileName1(self, widget, event = None):
 
-    def saveFileName1(self, widget, event):
-
-        if event is None or event.keyval == Gdk.KEY_Return:
+        if event == None or event.keyval == Gdk.KEY_Return:
             if self.nameFile1Entry.get_text().strip():
                 self.fileName = self.nameFile1Entry.get_text()
 
@@ -609,9 +609,7 @@ class programLoop(Gtk.Window):
                 self.targetFlowRate = float(self.nameFile1targetFlowRate.get_text())
             except ValueError:
                 None
-            print(f"File Name: {self.fileName}")
-            print(f"Target Flow Rate: {self.targetFlowRate}")
-
+                
             self.text_userDataCheck = (
                 f"Press the button to begin the test.\nThis should start and run the motors for the duration of the test.\nIf the motors are running outside of the test,\nuse the switches in the electrical cabinet to turn them off.\nDo not attempt another test and contact the VULCAN_FRY team for assistance.\nFile Name: {self.fileName}\nTarget Flow Rate: {self.targetFlowRate}"
             )
