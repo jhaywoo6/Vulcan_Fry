@@ -20,6 +20,8 @@ off of the pi if it is possible to do so prior to imaging.
 2. Preforming the test
 To start the pi, plug in the included USB-C Cable. If its connected to power, it should turn on.
 Upon being powered, the pi will start up the OS (Gnome), and will autostart the program on startup.
+Note the E-Stop button. This will cut power to the water pumps. Press the E-stop button if they behave unexpectedly.
+The program will not be affected by the E-stop, so you can finish these steps when its safe to do so.
 
 Step 1: Test Parameters
   You will be prompted to enter a test name in the first text entry box and a target flow rate in the second text entry box.
@@ -110,6 +112,8 @@ as the onsceen keyboard will close geany upon hitting the backspace button, maki
 Alternativly, copy and paste the latest revision of this program into your code editor of choice. 
 The text of the code can either be pasted directly into geany, or you can replace the file 
 with one of an identical name with the new modifications.
+
+The latest functional rev as of writing is VulcanFryTestApparatus Ver. 1.0.1.py
 
 The program uses Gtk 3.0 to create and load GUI elements. Refer to the Gtk documentation
 for mor info on how these elements work. (https://python-gtk-3-tutorial.readthedocs.io/en/latest/)
