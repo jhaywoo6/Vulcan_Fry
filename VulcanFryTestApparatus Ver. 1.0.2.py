@@ -17,6 +17,9 @@ import time
 from tkinter import filedialog
 import numpy as np
 from contextlib import ExitStack
+import RPi.GPIO as GPIO
+from time import sleep
+from max31855 import MAX31855
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gdk
@@ -36,7 +39,7 @@ params = {
     },
     "DS3502": {
         "DSAddress": 0x28,
-        "TargetTemperatureDefault": 6,
+        "TargetTemperatureDefault": 250,
         "setValveDefault": 127,
         "valveAdjustmentFrequency": 0.05,
         "margin": 0.05 # The allowed variance in temperature once target is reached before the valve attempts to correct to target again.
@@ -49,7 +52,7 @@ params = {
     "sensors": {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
         "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
-        "temperature": {"thermocouple no.": [(Value('d', 0.00), Lock()) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00)},
+        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00)},
     },
     "motor": {
         "pin1": 12,
@@ -69,165 +72,6 @@ params = {
     "significantFigures": 2,
     "returnFarenheit": True  # Set to True to return Farenheit, False for Celsius
 }
-
-# Install into a seperate file later
-
-"""
-This is a library for the octo MAX31855 thermocouple breakout board.
-
-MIT License
-
-Copyright (c) 2020 Mitchell Herbert
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files
-(the "Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-"""
-
-import RPi.GPIO as GPIO
-from time import sleep
-
-class MAX31855:
-	"""
-	Initializes GPIO pins and instance variables.
-	CS initializes to high because it is active low.
-	SO is an input pin.
-
-	:param SCK: the BCM pin number of the SCK line
-	:param CS: the BCM pin number of the CS line
-	:param SO: the BCM pin number of the SO line
-	:param T0: the BCM pin number of the T0 line
-	:param T1: the BCM pin number of the T1 line
-	:param T2: the BCM pin number of the T2 line
-	"""
-	def __init__(self, SCK, CS, SO, T0, T1, T2):
-		GPIO.setmode(GPIO.BCM)
-		# Setup all of the GPIO pins
-		for pin_number in [SCK, T0, T1, T2]:
-			GPIO.setup(pin_number, GPIO.OUT)
-			GPIO.output(pin_number, 0)
-		GPIO.setup(CS, GPIO.OUT)
-		GPIO.output(CS, 1)
-		GPIO.setup(SO, GPIO.IN)
-		# Initialize instance variables
-		self.SCK = SCK
-		self.CS = CS
-		self.SO = SO
-		self.T0 = T0
-		self.T1 = T1
-		self.T2 = T2
-		# Initialize the poll data to zero
-		self.latest_data = 0b0
-
-	"""
-	Communicates with the octo MAX31855 board to retrieve
-	temperature and fault data. The data is stored in
-	self.latest_data for later reference.
-
-	:param therm_id: id of the thermocouple (0 - 7)
-	"""
-	def read_data(self, therm_id):
-		# Select the thermocouple using multiplexer
-		GPIO.output(self.T2, therm_id & 0b100)
-		GPIO.output(self.T1, therm_id & 0b10)
-		GPIO.output(self.T0, therm_id & 0b1)
-		# Wait for the multiplexer to update
-		sleep(0.125)
-		# Select the chip and record incoming data
-		data = 0b0
-		GPIO.output(self.CS, 0)
-		# Shift in 32 bits of data
-		for bitshift in reversed(range(0, 32)):
-			GPIO.output(self.SCK, 1)
-			data += GPIO.input(self.SO) << bitshift
-			GPIO.output(self.SCK, 0)
-		GPIO.output(self.CS, 1)
-		self.latest_data = data
-
-	"""
-	Gets the temperature of the most recently polled
-	thermocouple.
-
-	:returns: float representing the temperature in celsius
-	"""
-	def get_thermocouple_temp(self):
-		data = self.latest_data
-		# Select appropriate bits
-		data = data >> 18
-		# Handle twos complement
-		if data >= 0x2000:
-			data = -((data ^ 0x3fff) + 1)
-		# Divide by 4 to handle fractional component
-		return data / 4
-
-	"""
-	Gets the temperature of the reference junction from
-	the most recent poll.
-
-	:returns: float representing the temperature in celsius
-	"""
-	def get_reference_temp(self):
-		data = self.latest_data
-		# Select appropriate bits
-		data = (data & 0xfff0) >> 4
-		# Handle twos complement
-		if data & 0x800:
-			data = -((data ^ 0xfff) + 1)
-		# Divide by 16 to handle fractional component
-		return data / 16
-
-	"""
-	Returns a value signififying a particular fault in the most
-	recent poll.
-
-	0 indicates that no faults exist
-	1 indicates an SCV fault (thermocouple is shorted to VCC)
-	2 indicates an SCG fault (thermocouple is shorted to GND)
-	3 indicates an OC fault (the thermocouple is not connected)
-
-	:returns: an integer representing the fault
-	"""
-	def get_faults(self):
-		data = self.latest_data
-		if data & 0x00010000:
-			if data & 0b100:
-				return 1
-			if data & 0b10:
-				return 2
-			if data & 0b1:
-				return 3
-		return 0
-
-	"""
-	Should be called at the end of program execution to bring
-	all GPIO pins to a 'safe' state.
-	"""
-	def cleanup(self):
-		GPIO.cleanup()
-
-
-	"""
-	Returns the value of latest_data
-
-	:returns: the value of latest_data
-	"""
-	def get_latest_data(self):
-		return self.latest_data
 
 def readPower(chan, ADS1115Params):
     rawVrms = 0.0
@@ -256,18 +100,30 @@ def readTemperature(endDataCollect):
             for i in range(params["thermoNum"]):
                 Temperature.read_data(i)
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
-                    params["sensors"]["temperature"]["thermocouple no."][i] = Temperature.get_thermocouple_temp()
+                    params["sensors"]["temperature"]["thermocouple no."][i].value = Temperature.get_thermocouple_temp()
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
-                params["sensors"]["temperature"]["tempAvg"] = round(np.mean(params["sensors"]["temperature"]["thermocouple no."][0:params["thermoNum"]]), params["significantFigures"])
+               params["sensors"]["temperature"]["tempAvg"].value = round(
+                    np.mean([
+                        params["sensors"]["temperature"]["thermocouple no."][i].value
+                        for i in range(params["thermoNum"])
+                    ]),
+                    params["significantFigures"]
+                )
     except:
         while not endDataCollect.is_set():
             for i in range(params["thermoNum"]):
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
-                    params["sensors"]["temperature"]["thermocouple no."][i] = -1
+                    params["sensors"]["temperature"]["thermocouple no."][i].value = -1
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
-                params["sensors"]["temperature"]["tempAvg"] = round(np.mean(params["sensors"]["temperature"]["thermocouple no."][0:params["thermoNum"]]), params["significantFigures"])
+                params["sensors"]["temperature"]["tempAvg"].value = round(
+                    np.mean([
+                        params["sensors"]["temperature"]["thermocouple no."][i].value
+                        for i in range(params["thermoNum"])
+                    ]),
+                    params["significantFigures"]
+                )
 
         
 
@@ -368,30 +224,27 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
             data["thermocouple no."]["value"].extend(["Unused"] * (8 - len(data["thermocouple no."]["value"])))
 
         with ExitStack() as stack:
-            locks = [
-                params["sensors"]["gas"]["tally"][1],
-                params["sensors"]["gas"]["flowRate"][1],
-                params["sensors"]["water"]["tally"][1],
-                params["sensors"]["water"]["flowRate"][1],
-                params["sensors"]["gas"]["totalTally"][1],
-                params["sensors"]["water"]["totalTally"][1],
-                params["clocks"]["cookTime"][1],
-                params["clocks"]["totalTime"][1],
-                [tc[1].value for tc in params["sensors"]["temperature"]["thermocouple no."]]
-            ]
+            stack.enter_context(params["sensors"]["gas"]["tally"].get_lock())
+            stack.enter_context(params["sensors"]["gas"]["flowRate"].get_lock())
+            stack.enter_context(params["sensors"]["water"]["tally"].get_lock())
+            stack.enter_context(params["sensors"]["water"]["flowRate"].get_lock())
+            stack.enter_context(params["sensors"]["gas"]["totalTally"].get_lock())
+            stack.enter_context(params["sensors"]["water"]["totalTally"].get_lock())
+            stack.enter_context(params["clocks"]["cookTime"].get_lock())
+            stack.enter_context(params["clocks"]["totalTime"].get_lock())
 
-            for lock in locks:
-                stack.enter_context(lock)
+            for tc in params["sensors"]["temperature"]["thermocouple no."]:
+                stack.enter_context(tc.get_lock())
 
-            data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"][0].value, params["significantFigures"])
-            data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"][0].value, params["significantFigures"])
-            data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"][0].value, params["significantFigures"])
-            data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"][0].value, params["significantFigures"])
-            data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"][0].value, params["significantFigures"])
-            data["CookTime"]["value"] = params["clocks"]["cookTime"][0].value
-            data["totalTime"]["value"] = params["clocks"]["totalTime"][0].value
-            data["thermocouple no."] = [tc[0].value for tc in params["sensors"]["temperature"]["thermocouple no."]]
-            data["tempAvg"] = params["sensors"]["temperature"]["tempAvg"][0].value
+            data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
+            data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
+            data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
+            data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])
+            data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
+            data["CookTime"]["value"] = params["clocks"]["cookTime"].value
+            data["totalTime"]["value"] = params["clocks"]["totalTime"].value
+            data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
+            data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
 
         queue.put(data)
         elapsedTime = time.time() - startTime
@@ -729,7 +582,7 @@ class programLoop(Gtk.Window):
                 target=clockTracker, args=(self.endDataCollect, "totalTime"), daemon=True
             )
             self.temperatureProcess = multiprocessing.Process(
-                 target=readTemperature, args=(self.endDataCollect), daemon=True
+                 target=readTemperature, args=(self.endDataCollect, ), daemon=True
             )
             self.dataProcess.start()
             self.GasProcess.start()
@@ -766,10 +619,10 @@ class programLoop(Gtk.Window):
     def checkQueue(self):
         while not self.queue.empty():
             self.dataList.append(self.queue.get())
+            print("Data count:")
             print(len(self.dataList))
             if len(self.dataList) >= params["dataListMaxLength"]: 
                 self.dataList.pop(0)
-
             dataUpdateDetailedValues = "\n".join(
                 f"{key}: {self.dataList[-1][key]['value']} {self.dataList[-1][key]['unit']}"
                 for key in self.dataList[-1] if key != "thermocouple no."
