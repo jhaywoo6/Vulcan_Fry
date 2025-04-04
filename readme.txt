@@ -131,6 +131,10 @@ While the os should log in the user automatically, some changes may require a lo
 Username: Vulcan
 Password: FrySpring2025
 
+A keyboard extension is used to inprove the base keyboard. If it is not installed, use these instructions to do so.
+https://github.com/nick-shmyrev/improved-osk-gnome-ext
+
+Marked for deletion (Reason, better alternative found)
 The on-screen keyboard may clip if the os font size is too big. The default size has been lowered by default,
 but this can be adjusted from the gnome tweaker. Activities->Quick access bar->Tweaker. (Appears as two switches)
 Navigate to fonts and adjust the font size. Recommended: 0.8.
