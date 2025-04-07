@@ -52,7 +52,7 @@ params = {
     "sensors": {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
         "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
-        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00)},
+        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Barrel In", 1: "Barrel Out", 2: "Water In", 3: "Water Out", 4: "Pump In", 5: "Pump Out", 6: "Spare 1", 7: "Spare 2"}},
     },
     "motor": {
         "pin1": 12,
@@ -631,7 +631,7 @@ class programLoop(Gtk.Window):
             )
 
             dataUpdateDetailedTemps = "\n".join(
-                f"Thermocouple {i + 1}: {temp} {self.dataList[-1]['thermocouple no.']['unit']}"
+                f"{params['temperature']['thermocouple name'][i]}: {temp} {self.dataList[-1]['thermocouple no.']['unit']}"
                 for i, temp in enumerate(self.dataList[-1]['thermocouple no.']['value'])
             )
 
