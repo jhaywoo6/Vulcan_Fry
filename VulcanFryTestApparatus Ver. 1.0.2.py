@@ -60,7 +60,6 @@ params = {
         "windUpTime": 5000
     },
     "thermoNum": thermoNum,
-    "returnFarenheit": True,
     "DataCollectionFrequency": 1, # Reading the MAX31855, the fastest this can go is ~0.88.
     "clocks": {
         "cookTime": Value(c_double, 0.00),
@@ -100,7 +99,10 @@ def readTemperature(endDataCollect):
             for i in range(params["thermoNum"]):
                 Temperature.read_data(i)
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
-                    params["sensors"]["temperature"]["thermocouple no."][i].value = Temperature.get_thermocouple_temp()
+                    if params["returnFarenheit"]:
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = (Temperature.get_thermocouple_temp() * (9/5)) + 32
+                    else:
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = Temperature.get_thermocouple_temp()
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
                params["sensors"]["temperature"]["tempAvg"].value = round(
