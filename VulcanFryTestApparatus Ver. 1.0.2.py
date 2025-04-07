@@ -631,7 +631,7 @@ class programLoop(Gtk.Window):
             )
 
             dataUpdateDetailedTemps = "\n".join(
-                f"{params['temperature']['thermocouple name'][i]}: {temp} {self.dataList[-1]['thermocouple no.']['unit']}"
+                f"{params['sensors']['temperature']['thermocouple name'][i]}: {temp} {self.dataList[-1]['thermocouple no.']['unit']}"
                 for i, temp in enumerate(self.dataList[-1]['thermocouple no.']['value'])
             )
 
