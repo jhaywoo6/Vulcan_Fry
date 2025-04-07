@@ -24,7 +24,7 @@ from max31855 import MAX31855
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gdk
 
-thermoNum = 7
+thermoNum = 6
 
 params = {
     "MAX31855Pinout": (11, 8, 9, 17, 27, 22),
