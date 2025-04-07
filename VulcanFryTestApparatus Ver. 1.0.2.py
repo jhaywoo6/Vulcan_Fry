@@ -100,7 +100,7 @@ def readTemperature(endDataCollect):
                 Temperature.read_data(i)
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                     if params["returnFarenheit"]:
-                        params["sensors"]["temperature"]["thermocouple no."][i].value = (Temperature.get_thermocouple_temp() * (9/5)) + 32
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = round((Temperature.get_thermocouple_temp() * (9/5)) + 32, params["significantFigures"])
                     else:
                         params["sensors"]["temperature"]["thermocouple no."][i].value = Temperature.get_thermocouple_temp()
 
