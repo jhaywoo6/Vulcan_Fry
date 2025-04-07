@@ -697,7 +697,7 @@ class programLoop(Gtk.Window):
             "Water Usage",
             "Gas Total Usage",
             "Water Total Usage"
-        ] + [f"Thermocouple {i+1}" for i in range(params["thermoNum"])]
+        ] + [f"{params['sensors']['temperature']['thermocouple name'][i]}" for i in range(params["thermoNum"])]
 
         with open(file_path, 'w', newline='') as file:
             writer = csv.writer(file)
