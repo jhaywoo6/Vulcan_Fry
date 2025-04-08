@@ -101,6 +101,16 @@ Relay Control
 # GPIO # 12, 13
 # Motor 1 and 2
 
+The Thermocouples are wired to the MAX31855. Their port number can be seen on the MAX31855 Board. Ports 0-5 are used in the apparatus, with 2 spare slots.
+Facing the 4 hoses on the heat exchanger with the motors on the right:
+1 0
+3 2
+Just to the right of the heat exchanger facing the motors:
+4 5
+In the program, the numbers currently corespond to the following:
+{0: "Barrel In", 1: "Barrel Out", 2: "Water In", 3: "Water Out", 4: "Pump In", 5: "Pump Out", 6: "Spare 1", 7: "Spare 2"}
+These can be changed in the program parameters.
+
 Geany is used to modify and test new versions of the program. It can be found on
 the quick access bar by selecting activities on the top left and looking under the program desktop.
 It appears as a genies lamp.
