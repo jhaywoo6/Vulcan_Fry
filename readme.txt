@@ -24,10 +24,10 @@ Note the E-Stop button. This will cut power to the water pumps. Press the E-stop
 The program will not be affected by the E-stop, so you can finish these steps when its safe to do so.
 
 Step 1: Test Parameters
-  You will be prompted to enter a test name in the first text entry box and a target flow rate in the second text entry box.
+  You will be prompted to enter a test name in the first text entry box and a target temperature in the second text entry box.
   Tap the box to bring up the on-screen keyboard. If the keyboard does not appear,
   check that on-screen keyboard is turned on in the accessibility settings, located on the top right bar. Look for the person icon.
-  Type in the test name and the target flow rate in gallons per second.
+  Type in the test name and the target temperature in gallons per second.
   Hit enter on the on-screen keyboard to advance to the next screen.
 
 Step 2: Verify Parameters
@@ -40,7 +40,7 @@ Step 3: Data Collection
   This is the simple view. To swap to the detailed view and view all collected parameters, click swap to detailed view on the top right.
   You can freely swap between views this way. 
   During tests the time the current test has ran will display as Cook Time.
-  The program will also attempt to automatically match the target flow rate by adjusting the control valve in relation to the measured flow rate.
+  The program will also attempt to automatically match the target temperature by adjusting the control valve in relation to the measured flow rate.
   Click End Test to end the current test.
   The Cook time will reset to 0 and the control valve will close, but all other data points will continue to be tracked.
   "Click to begin the next test." Will start a new test, counting a new Cook Time and operating the control valve again automatically.
