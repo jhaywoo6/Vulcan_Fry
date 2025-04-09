@@ -144,9 +144,9 @@ Password: FrySpring2025
 A keyboard extension is used to inprove the base keyboard. If it is not installed, use these instructions to do so.
 https://github.com/nick-shmyrev/improved-osk-gnome-ext
 
-Marked for deletion (Reason, better alternative found)
-The on-screen keyboard may clip if the os font size is too big. The default size has been lowered by default,
+The program window may clip out of the scree if the os font size is too big, causing buttons to become inaccessible. The default size has been lowered by default,
 but this can be adjusted from the gnome tweaker. Activities->Quick access bar->Tweaker. (Appears as two switches)
 Navigate to fonts and adjust the font size. Recommended: 0.8.
+It is recommended for future code iterations to add in auto resizing of ui elements should a new screen or alternative window resolution be used.
 
 
