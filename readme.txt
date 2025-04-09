@@ -20,7 +20,7 @@ off of the pi if it is possible to do so prior to imaging.
 2. Preforming the test
 To start the pi, plug in the included USB-C Cable. If its connected to power, it should turn on.
 Upon being powered, the pi will start up the OS (Gnome), and will autostart the program on startup.
-Note the E-Stop button. This will cut power to the water pumps. Press the E-stop button if they behave unexpectedly.
+Note the E-Stop button. This will cut power to the oil pumps. Press the E-stop button if they behave unexpectedly.
 The program will not be affected by the E-stop, so you can finish these steps when its safe to do so.
 
 Step 1: Test Parameters
