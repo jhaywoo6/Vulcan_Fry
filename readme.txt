@@ -108,7 +108,7 @@ Facing the 4 hoses on the heat exchanger with the motors on the right:
 Just to the right of the heat exchanger facing the motors:
 4 5
 In the program, the numbers currently corespond to the following:
-{0: "Barrel In", 1: "Barrel Out", 2: "Water In", 3: "Water Out", 4: "Pump In", 5: "Pump Out", 6: "Spare 1", 7: "Spare 2"}
+0: "Water Out", 1: "Water In", 2: "HX In", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer HX In", 6: "Spare 1", 7: "Spare 2"
 These can be changed in the program parameters.
 
 Geany is used to modify and test new versions of the program. It can be found on
