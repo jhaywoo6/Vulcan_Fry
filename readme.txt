@@ -206,6 +206,36 @@ Users > Unlock > Enter Password > Automatic Login (Enable)
 In Tweaker:
 Fonts > Scaling Factor (Set to 0.8)
 Install the keyboard extension (https://github.com/nick-shmyrev/improved-osk-gnome-ext)
+Terminal > sudo apt-get reinstall chrome-gnome-shell (You may need to do this on chromium browsers)
+Install and turn extension on. 
+Reload website and hit setting
+Adjust Landscape Height to 50% or as needed.
+Navigate to project github and download VulcanFryTestApparatus Ver. 1.0.2.py and max31855.py
+Move these files to the home directory
+Terminal > sudo nano /etc/systemd/system/TestApp.service
+Copy the following:
+"""
+[Unit]
+Description=Vulcan test apparatus data collection service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/Vulcan/VulcanFryTestApparatus Ver. 1.0.2.py
+WorkingDirectory=/home/Vulcan
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=Vulcan
+
+[Install]
+WantedBy=multi-user.target
+"""
+ctrl s + ctrl x
+Restart Pi
+
+
+
+
 
 
 
