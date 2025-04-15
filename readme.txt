@@ -173,7 +173,11 @@ Once the Write is complete, eject the MicroSD card and insert into the Raspberry
 
 Step 2: 
 Plug the pi into the touch screen or us a micro-hdmi cable into another monitor. It is recommended to use a keyboard and mouse for setup.
-
+Open the Terminal. This can be found at the top left of the desktop.
+Run these commands:
+sudo apt-get upgrade (Note, this will cause a blue screen equivalent if SSH is enabled and the pi is not connected to another computer by SSH)
+y + enter when prompted
+sudo apt update && sudo apt install xorg gnome gnome-shell --no-install-recommends
 
 
 
