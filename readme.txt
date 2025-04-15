@@ -175,7 +175,11 @@ Step 2:
 Plug the pi into the touch screen or us a micro-hdmi cable into another monitor. It is recommended to use a keyboard and mouse for setup.
 Open the Terminal. This can be found at the top left of the desktop.
 Run these commands:
-sudo apt full-upgrade 
+sudo raspi-config
+Interface Options > VNC (Disable) & SPI (Enable) & I2C (Enable)
+Finish
+sudo apt-get update
+sudo apt-get upgrade (If VNC server or SSH is enabled, you must connect to the pi by another computer via SSH, otherwise the pi will freeze and become inoperable)
 y + enter when prompted
 sudo apt update && sudo apt install xorg gnome gnome-shell --no-install-recommends
 
