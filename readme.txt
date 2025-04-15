@@ -156,4 +156,26 @@ but this can be adjusted from the gnome tweaker. Activities->Quick access bar->T
 Navigate to fonts and adjust the font size. Recommended: 0.8.
 It is recommended for future code iterations to add in auto resizing of ui elements should a new screen or alternative window resolution be used.
 
+Manual installation:
+To manually install the program onto the Raspberry Pi, you will need the Raspberry Pi Imager v1.8.5 and an internet connection.
+Format the MicroSD card being used. You may need to use DiskPart to clean the MicroSD card if the card has previously been used for the pi.
+
+Step 1: Imaging
+Insert the MicroSD card into the computer and open Raspberry Pi Imager v1.8.5. Select device Raspberry Pi 4, Raspberry Pi OS (64-BIT), and the
+MicroSD card as the storage device. The card provided by the Vulcan Fry team is ~32 GB. 
+NEXT > EDIT SETTINGS
+Set hostname and username to Vulcan
+Set password to FrySpring2025
+Under config wireless lan, set SSID and password accordingly
+Under services disable SSH
+Click SAVE > YES > YES (This will erase all data on the card if there was any at this stage)
+Once the Write is complete, eject the MicroSD card and insert into the Raspberry Pi 4. It is recommended to remove the GPIO pin attachment during this stage.
+
+Step 2: 
+Plug the pi into the touch screen or us a micro-hdmi cable into another monitor. It is recommended to use a keyboard and mouse for setup.
+
+
+
+
+
 
