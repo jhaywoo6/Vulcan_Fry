@@ -210,7 +210,7 @@ Terminal > sudo apt-get reinstall chrome-gnome-shell (You may need to do this on
 Install and turn extension on. 
 Reload website and hit setting
 Adjust Landscape Height to 50% or as needed.
-Navigate to project github and download VulcanFryTestApparatus Ver. 1.0.2.py and max31855.py
+Navigate to project github and download VulcanFryTestApparatus_Ver_1_0_2.py
 Move these files to the home directory
 Terminal > sudo nano /etc/systemd/system/TestApp.service
 Copy the following:
