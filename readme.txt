@@ -171,17 +171,29 @@ Under services disable SSH
 Click SAVE > YES > YES (This will erase all data on the card if there was any at this stage)
 Once the Write is complete, eject the MicroSD card and insert into the Raspberry Pi 4. It is recommended to remove the GPIO pin attachment during this stage.
 
-Step 2: 
+Step 2: OS setup
 Plug the pi into the touch screen or us a micro-hdmi cable into another monitor. It is recommended to use a keyboard and mouse for setup.
 Open the Terminal. This can be found at the top left of the desktop.
 Run these commands:
 sudo raspi-config
 Interface Options > VNC (Disable) & SPI (Enable) & I2C (Enable)
 Finish
+sudo apt-get remove realvnc-vnc-server
 sudo apt-get update
-sudo apt-get upgrade (If VNC server or SSH is enabled, you must connect to the pi by another computer via SSH, otherwise the pi will freeze and become inoperable)
+sudo apt-get upgrade
 y + enter when prompted
+ctrl-c if stuck on "Looking for font path" or connect pi via SSH to seperate computer prior to running sudo apt-get upgrade command.
+sudo pip install Adafruit-Blinka --break-system-packages
+sudo pip install adafruit-circuitpython-ads1x15 --break-system-packages
+sudo pip install adafruit-circuitpython-ds3502 --break-system-packages
 sudo apt update && sudo apt install xorg gnome gnome-shell --no-install-recommends
+y + enter when prompted
+enter
+Highlight gdm3 and hit enter
+sudo pip install Adafruit-Blinka --break-system-packages
+sudo pip install adafruit-circuitpython-ads1x15 --break-system-packages
+sudo pip install adafruit-circuitpython-ds3502 --break-system-packages
+Restart the pi
 
 
 
