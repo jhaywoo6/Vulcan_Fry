@@ -198,7 +198,7 @@ Restart the pi
 Step 3: OS setup
 Click activities.
 Unpin all but Files
-Pin terminal, web browser of choice, geany, task manager, settings, tweaker
+Pin terminal, web browser of choice (firefox recommended), geany, task manager, settings, tweaker
 In Settings:
 Power > Screen Blank > Never
 Accessibility > Enable Animations (Disable) & Always Show Accessibility Menu (Enable) & Screen Keyboard (Enable)
@@ -212,28 +212,26 @@ Reload website and hit setting
 Adjust Landscape Height to 50% or as needed.
 Navigate to project github and download VulcanFryTestApparatus_Ver_1_0_2.py
 Move these files to the home directory
-Terminal > sudo nano /etc/systemd/system/TestApp.service
+In the terminal:
+mkdir -p ~/.config/autostart
+nano ~/.config/autostart/TestApp.desktop
 Copy the following:
 """
-[Unit]
-Description=Vulcan test apparatus data collection service
-After=network.target
-
-[Service]
-ExecStart=/usr/bin/python3 /home/Vulcan/VulcanFryTestApparatus_Ver_1_0_2.py
-WorkingDirectory=/home/Vulcan
-StandardOutput=inherit
-StandardError=inherit
-Restart=always
-User=Vulcan
-
-[Install]
-WantedBy=multi-user.target
+[Desktop Entry]
+Type=Application
+Exec=/usr/bin/python3 /home/Vulcan/VulcanFryTestApparatus_Ver_1_0_2.py
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Vulcan Fry Data Collection Service
+Comment=Collects test data according to user input
 """
 ctrl s + ctrl x
-Terminal > sudo systemctl enable TestApp.service
+chmod +x /home/Vulcan/VulcanFryTestApparatus_Ver_1_0_2.py
 Restart Pi
 
+The Pi is now set up to run the test program! To update VulcanFryTestApparatus_Ver_1_0_2.py, edit it in geany or replace the file with one of the same name.
+To update the name, edit the .desktop file as shown above with the new name.
 
 
 
