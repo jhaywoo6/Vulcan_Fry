@@ -171,7 +171,7 @@ Under services disable SSH
 Click SAVE > YES > YES (This will erase all data on the card if there was any at this stage)
 Once the Write is complete, eject the MicroSD card and insert into the Raspberry Pi 4. It is recommended to remove the GPIO pin attachment during this stage.
 
-Step 2: OS setup
+Step 2: Terminal Lines
 Plug the pi into the touch screen or us a micro-hdmi cable into another monitor. It is recommended to use a keyboard and mouse for setup.
 Open the Terminal. This can be found at the top left of the desktop.
 Run these commands:
@@ -194,6 +194,18 @@ sudo pip install Adafruit-Blinka --break-system-packages
 sudo pip install adafruit-circuitpython-ads1x15 --break-system-packages
 sudo pip install adafruit-circuitpython-ds3502 --break-system-packages
 Restart the pi
+
+Step 3: OS setup
+Click activities.
+Unpin all but Files
+Pin terminal, web browser of choice, geany, task manager, settings, tweaker
+In Settings:
+Power > Screen Blank > Never
+Accessibility > Enable Animations (Disable) & Always Show Accessibility Menu (Enable) & Screen Keyboard (Enable)
+Users > Unlock > Enter Password > Automatic Login (Enable)
+In Tweaker:
+Fonts > Scaling Factor (Set to 0.8)
+Install the keyboard extension (https://github.com/nick-shmyrev/improved-osk-gnome-ext)
 
 
 
