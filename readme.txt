@@ -220,7 +220,7 @@ Description=Vulcan test apparatus data collection service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/Vulcan/VulcanFryTestApparatus Ver. 1.0.2.py
+ExecStart=/usr/bin/python3 /home/Vulcan/VulcanFryTestApparatus_Ver_1_0_2.py
 WorkingDirectory=/home/Vulcan
 StandardOutput=inherit
 StandardError=inherit
@@ -231,6 +231,7 @@ User=Vulcan
 WantedBy=multi-user.target
 """
 ctrl s + ctrl x
+Terminal > sudo systemctl enable TestApp.service
 Restart Pi
 
 
