@@ -233,8 +233,9 @@ Restart Pi
 The Pi is now set up to run the test program! To update VulcanFryTestApparatus_Ver_1_0_2.py, edit it in geany or replace the file with one of the same name.
 To update the name, edit the .desktop file as shown above with the new name.
 
-
-
+If important changes are made and a new image file is needed, use Win32 Disk Imager to Read the set up MicroSD card. Select a directory and enter "(Filename).img". 
+Writing is significantly faster than manuall installation and can fix bugs. Select "(Filename).img" in the directory and click read. This will overwrite the MicroSD card.
+If using a MicroSD to SD card, make sure the switch is in the read write position.
 
 
 
