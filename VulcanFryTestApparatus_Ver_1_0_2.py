@@ -53,11 +53,12 @@ params = {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
         "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
         "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Water Out", 1: "Water In", 2: "HX In", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer HX In", 6: "Spare 1", 7: "Spare 2"}},
+        "power" : Value('d', 0.00),
     },
     "motor": {
         "pin1": 12,
         "pin2": 13,
-        "windUpTime": 5000
+        "windUpTime": 500
     },
     "thermoNum": thermoNum,
     "DataCollectionFrequency": 1, # Reading the MAX31855, the fastest this can go is ~0.88.
@@ -69,20 +70,27 @@ params = {
     "resolution": (800, 428),
     "defaultFileName": "Test",
     "significantFigures": 2,
-    "returnFarenheit": True  # Set to True to return Farenheit, False for Celsius
+    "returnFarenheit": True,  # Set to True to return Farenheit, False for Celsius
+    "windUpTime": 10000 # Time in miliseconds untill temperature target is checked. Idle Oil in apparatus is expected to be cool before a test starts untill hot oil begins flowing from the fryer?
 }
 
-def readPower(chan, ADS1115Params):
+def readPower(chan, endDataCollect):
     rawVrms = 0.0
-    samples = ADS1115Params["ADSSamples"]
-    for _ in range(samples):
-        voltage = chan.voltage
-        rawVrms += voltage ** 2
+    samples = params['ADS1115']['ADSSamples']
+    supply = params['ADS1115']['voltageSupply']
+    while not endDataCollect.is_set():
+        for _ in range(samples):
+            voltage = chan.voltage
+            rawVrms += voltage ** 2
     
-    vrms = (rawVrms / samples) ** 0.5
-    current = (vrms / ADS1115Params["burdenResistor"]) * ADS1115Params["SCTRatio"] / ADS1115Params["currentCorrection"] # Note: currentCorrection is a bandaid fix for adjusting read current to expected value. May need fixed in the future.
-    power = ADS1115Params["voltageSupply"] * current
-    return power
+        vrms = (rawVrms / samples) ** 0.5
+        current = (vrms / params['ADS1115']["burdenResistor"]) * params['ADS1115']["SCTRatio"] / params['ADS1115']["currentCorrection"] # Note: currentCorrection is a bandaid fix for adjusting read current to expected value. May need fixed in the future.
+        with params['sensors']['power'].get_lock():
+            params['sensors']['power'].value = round(supply * current, params['significantFigures'])
+        rawVrms = 0.0
+            
+    with params['sensors']['power'].get_lock():
+            params['sensors']['power'].value = 0
 
 def readTemperature(endDataCollect):
     try:
@@ -125,11 +133,7 @@ def readTemperature(endDataCollect):
                         for i in range(params["thermoNum"])
                     ]),
                     params["significantFigures"]
-                )
-
-        
-
-        
+                )    
 
 # Adds a number to the end of the file name if it already exists. Test, Test(1), Test(2), ect.
 
@@ -217,10 +221,8 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
 
     while not endDataCollect.is_set():
         startTime = time.time()
-        try:
-            data["wattage"]["value"] = round(readPower(wattChan, ADS1115Params))
-        except:
-            data["wattage"]["value"] = -1
+        with params['sensors']['power'].get_lock():
+            data["wattage"]["value"] = params['sensors']['power'].value
 
         if len(data["thermocouple no."]["value"]) < 8:
             data["thermocouple no."]["value"].extend(["Unused"] * (8 - len(data["thermocouple no."]["value"])))
@@ -320,14 +322,14 @@ class programLoop(Gtk.Window):
             f"Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the fryer being tested.\nEnter a file name for saving the test in the first box.\nIf the file already exists, an extension (#) will be added.\nSelect the second box for a list of flow speed options.\nPick the option corresponding to the fryer you wish to test.\nPress Next or Enter to continue."
         )
 
-        self.textMotorStartup3label = "The motors should be turning on.\nIf they do not, end the test and contact the VULCAN_FRY team."
+        self.textwaitForTempTarget3label = "The motors should be turning on.\nIf they do not, end the test and contact the VULCAN_FRY team.\nAttempting to reach target temperature..."
         self.textMotorWindDown5Label = "The motors should be turning off.\nIf they do not, end the test and contact the VULCAN_FRY team."
         self.textSavingData8Label = "Saving Data..."
         self.textDataSave9Label = "Data Saved."
 
         self.textNameFile1LabelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_nameFile1label)}</span>"
         self.textUserDataCheckMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
-        self.textMotorStartup3labelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textMotorStartup3label)}</span>"
+        self.textwaitForTempTarget3labelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textwaitForTempTarget3label)}</span>"
         self.textMotorWindDown5LabelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textMotorWindDown5Label)}</span>"
         self.textSavingData8LabelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textSavingData8Label)}</span>"
         self.textDataSave9Label_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.textDataSave9Label)}</span>"
@@ -395,15 +397,23 @@ class programLoop(Gtk.Window):
         self.waitToBegin2.pack_start(self.waitToBegin2Cancel, True, True, 0)
         self.stack.add_named(self.waitToBegin2, "waitToBegin2")
 
-        # Screen 3: Waits for motors to turn on
-        self.motorStartup3 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
+        # Screen 3: Waits for target temperature to be reached.
+        self.waitForTempTarget3 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
 
-        self.motorStartup3label = Gtk.Label()
-        self.motorStartup3label.set_markup(self.textMotorStartup3labelMarkup)
-        self.motorStartup3label.set_line_wrap(True)
+        self.waitForTempTarget3label = Gtk.Label()
+        self.waitForTempTarget3label.set_markup(self.textwaitForTempTarget3labelMarkup)
+        self.waitForTempTarget3label.set_line_wrap(True)
 
-        self.motorStartup3.pack_start(self.motorStartup3label, True, True, 0)
-        self.stack.add_named(self.motorStartup3, "motorStartup3")
+        self.waitForTempTarget3Skip = Gtk.Button(label="Skip to data collection")
+        self.waitForTempTarget3Skip.connect("clicked", self.startDataCollection)
+
+        self.waitForTempTarget3Cancel = Gtk.Button(label="Cancel")
+        self.waitForTempTarget3Cancel.connect("clicked", self.resetProgram)
+
+        self.waitForTempTarget3.pack_start(self.waitForTempTarget3label, True, True, 0)
+        self.waitForTempTarget3.pack_start(self.waitForTempTarget3Skip, True, True, 0)
+        self.waitForTempTarget3.pack_start(self.waitForTempTarget3Cancel, True, True, 0)
+        self.stack.add_named(self.waitForTempTarget3, "waitForTempTarget3")
 
         # Screen 4: Displays data in simple view
         self.dataCollection4Simple = Gtk.Grid()
@@ -518,11 +528,12 @@ class programLoop(Gtk.Window):
             )
             self.textUserDataCheckMarkup = f"<span size='large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
 
-            try:
-                self.I2C = busio.I2C(board.SCL, board.SDA)
-                self.ads = ADS.ADS1115(i2c = self.I2C, address = params["ADS1115"]["ADSAddress"], gain = params["ADS1115"]["ADSGain"])
-                self.wattChan = AnalogIn(self.ads, ADS.P0, ADS.P1)
-                print("ADS1115 is connected")
+        
+            self.I2C = busio.I2C(board.SCL, board.SDA)
+            self.ads = ADS.ADS1115(i2c = self.I2C, address = params["ADS1115"]["ADSAddress"], gain = params["ADS1115"]["ADSGain"])
+            self.wattChan = AnalogIn(self.ads, ADS.P0, ADS.P1)
+            print("ADS1115 is connected")
+            """
             except:
                 class WattChanFallback:
                     @property
@@ -532,7 +543,7 @@ class programLoop(Gtk.Window):
                         return -1
                 self.wattChan = WattChanFallback()
                 print("ADS1115 is not connected")
-
+            """
             try:
                 self.I2C = busio.I2C(board.SCL, board.SDA)
                 self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
@@ -559,9 +570,17 @@ class programLoop(Gtk.Window):
         self.nameFile1TargetTemperaturePopover.popdown()
 
     def beginTest(self, *args):
-        self.stack.set_visible_child_name("motorStartup3")
+        self.stack.set_visible_child_name("waitForTempTarget3")
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
+        self.endDataCollect.clear()
+        self.temperatureProcess = multiprocessing.Process(
+                 target=readTemperature, args=(self.endDataCollect, ), daemon=True
+            )
+        self.temperatureProcess.start()
+        sleep(params["windUpTime"])
+        while params["sensors"]["temperature"]["tempAvg"].value > self.TargetTemperature:
+            pass
         GLib.timeout_add(params["motor"]["windUpTime"], self.startDataCollection)
 
     def startDataCollection(self):
@@ -570,7 +589,6 @@ class programLoop(Gtk.Window):
             params["sensors"]["water"]["tally"].value = 0.00
 
         if self.testUnderWay == False:
-            self.endDataCollect.clear()
             self.dataProcess = multiprocessing.Process(
                 target=getData, args=(self.queue, self.endDataCollect, self.wattChan, params["DataCollectionFrequency"], self.Temperature, params["ADS1115"]), daemon=True
             )
@@ -583,14 +601,14 @@ class programLoop(Gtk.Window):
             self.totalTimeProcess = multiprocessing.Process(
                 target=clockTracker, args=(self.endDataCollect, "totalTime"), daemon=True
             )
-            self.temperatureProcess = multiprocessing.Process(
-                 target=readTemperature, args=(self.endDataCollect, ), daemon=True
+            self.powerProcess = multiprocessing.Process(
+                target=readPower, args=(self.wattChan, self.endDataCollect), daemon=True
             )
             self.dataProcess.start()
             self.GasProcess.start()
             self.WaterProcess.start()
             self.totalTimeProcess.start()
-            self.temperatureProcess.start()
+            self.powerProcess.start()
             self.testUnderWay = True
         
         self.endTestEvent.clear()
@@ -619,6 +637,7 @@ class programLoop(Gtk.Window):
         self.stack.set_visible_child_name("dataCollection4Simple")
 
     def checkQueue(self):
+        
         while not self.queue.empty():
             self.dataList.append(self.queue.get())
             print("Data count:")
@@ -670,6 +689,7 @@ class programLoop(Gtk.Window):
         self.WaterProcess.join()
         self.totalTimeProcess.join()
         self.temperatureProcess.join()
+        self.powerProcess.join()
         with params["sensors"]["gas"]["totalTally"].get_lock(), params["sensors"]["water"]["totalTally"].get_lock():
             params["sensors"]["gas"]["totalTally"].value = 0.00
             params["sensors"]["water"]["totalTally"].value = 0.00
@@ -724,6 +744,10 @@ class programLoop(Gtk.Window):
 
     def resetProgram(self, *args):
         self.dataList = []
+        GPIO.output(params["motor"]["pin1"], GPIO.LOW)
+        GPIO.output(params["motor"]["pin2"], GPIO.LOW)
+        self.endDataCollect.set()
+        self.temperatureProcess.join()
         self.stack.set_visible_child_name("nameFile1")
         return False
 
