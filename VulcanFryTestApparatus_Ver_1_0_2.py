@@ -579,9 +579,18 @@ class programLoop(Gtk.Window):
         GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
         
         self.endDataCollect.clear()
+        self.endTestEvent.clear()
         self.temperatureProcess = multiprocessing.Process(
             target=readTemperature, args=(self.endDataCollect,), daemon=True
         )
+        try:
+            self.ControlProcess = multiprocessing.Process(
+                target=flowControl, args=(self.TargetTemperature, self.endTestEvent, self.ds3502, params["DS3502"]), daemon=True
+            )
+        except:
+            self.ControlProcess = multiprocessing.Process(
+                target=flowControl, args=(self.TargetTemperature, self.endTestEvent, -1, params["DS3502"]), daemon=True
+            )
         self.temperatureProcess.start()
         
         self.windUpTimeStart = time.time()
@@ -628,18 +637,11 @@ class programLoop(Gtk.Window):
             self.powerProcess.start()
             self.testUnderWay = True
         
-        self.endTestEvent.clear()
+        
         self.cookTimeProcess = multiprocessing.Process(
             target=clockTracker, args=(self.endTestEvent, "cookTime"), daemon=True
         )
-        try:
-            self.ControlProcess = multiprocessing.Process(
-                target=flowControl, args=(self.TargetTemperature, self.endTestEvent, self.ds3502, params["DS3502"]), daemon=True
-            )
-        except:
-            self.ControlProcess = multiprocessing.Process(
-                target=flowControl, args=(self.TargetTemperature, self.endTestEvent, -1, params["DS3502"]), daemon=True
-            )
+        
 
         self.ControlProcess.start()
         self.cookTimeProcess.start()
