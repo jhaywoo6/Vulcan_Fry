@@ -591,10 +591,6 @@ class programLoop(Gtk.Window):
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
                 self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
             
-            print("Elapsed:", elapsed_time)
-            print("TempCheck:", self.tempCheck)
-            print("TargetTemperature:", self.TargetTemperature)
-            
             if self.tempCheck >= self.TargetTemperature and elapsed_time >= (params["motor"]["windUpTime"] / 1000):
                 self.startDataCollection()
                 return False  # Stop calling this function
@@ -697,6 +693,7 @@ class programLoop(Gtk.Window):
         self.cookTimeProcess.join()
         self.stack.set_visible_child_name("motorWindDown5")
         self.motor.value = 0
+        print(params["motor"]["windUpTime"])
         GLib.timeout_add(params["motor"]["windUpTime"], self.continueTestingQuerry)
 
     def continueTestingQuerry(self):
