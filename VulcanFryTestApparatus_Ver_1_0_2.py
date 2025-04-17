@@ -686,11 +686,16 @@ class programLoop(Gtk.Window):
         return True
 
     def endTest(self, *args):
+        print("endTestRan")
         GPIO.output(params["motor"]["pin1"], GPIO.LOW)
         GPIO.output(params["motor"]["pin2"], GPIO.LOW)
+        print("Relays Set")
         self.endTestEvent.set()
+        print("endTestEvent set. Waiting for Control Process to join")
         self.ControlProcess.join()
+        print("endTestEvent set. Waiting for cook time Process to join")
         self.cookTimeProcess.join()
+        print("setting window")
         self.stack.set_visible_child_name("motorWindDown5")
         self.motor.value = 0
         print(params["motor"]["windUpTime"])
