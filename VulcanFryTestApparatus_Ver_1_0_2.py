@@ -39,15 +39,17 @@ params = {
     },
     "DS3502": {
         "DSAddress": 0x28,
-        "TargetTemperatureDefault": 250,
+        "TargetTemperatureDefault": 350,
         "setValveDefault": 127,
         "valveAdjustmentFrequency": 0.05,
         "margin": 0.05 # The allowed variance in temperature once target is reached before the valve attempts to correct to target again.
     },
     "TargetTemperatureOptions": { # The target average temperature to reach. The flow control valve will read tempAvg and then open the valve untill 
-        "Option A": 250,
-        "Option B": 300,
-        "Option C": 350
+        "Option A": 310,
+        "Option B": 320,
+        "Option C": 330,
+        "Option D": 340,
+        "Option E": 350
     },
     "sensors": {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
@@ -155,7 +157,7 @@ def duplicateLabeler(filepath):
 # All other functions run and collect data during and between tests until self.continueTestingQuerry6EndTesting = Gtk.Button(label="Click to end testing.") is pressed.
 
 def flowControl(target, endDataCollect, ds3502, DS3502Params):
-    setValve = DS3502Params["setValveDefault"]  # 0 Open, 127 Closed
+    setValve = 0  # 0 Open, 127 Closed
 
     try:
         ds3502.wiper = setValve
@@ -165,6 +167,7 @@ def flowControl(target, endDataCollect, ds3502, DS3502Params):
 
     errorMargin = target * DS3502Params["margin"]
     targetReached = False
+    sleep(params["windUpTime"])
 
     while not endDataCollect.is_set():
         with params["sensors"]["temperature"]["tempAvg"].get_lock():
@@ -173,7 +176,7 @@ def flowControl(target, endDataCollect, ds3502, DS3502Params):
             setValve = max(0, min(127, setValve + (1 if target > tempAvg else -1)))
             if targetReached == True:
                  targetReached = False
-            if tempAvg <= target:
+            if abs(target - tempAvg) < errorMargin:
                  targetReached = True
             try:
                 ds3502.wiper = setValve
@@ -581,12 +584,12 @@ class programLoop(Gtk.Window):
         self.windUpTimeStart = time.time()
         print((time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000))
         with params["sensors"]["temperature"]["tempAvg"].get_lock():
-            print(params["sensors"]["temperature"]["tempAvg"].value > self.TargetTemperature)
+            print(params["sensors"]["temperature"]["tempAvg"].value < self.TargetTemperature)
             self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
-        while self.tempCheck > self.TargetTemperature or (time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000):
+        while self.tempCheck < self.TargetTemperature or (time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000):
             print((time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000))
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
-                print(params["sensors"]["temperature"]["tempAvg"].value > self.TargetTemperature)
+                print(params["sensors"]["temperature"]["tempAvg"].value < self.TargetTemperature)
                 self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
             pass
         
