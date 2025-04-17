@@ -249,7 +249,7 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
             data["totalTime"]["value"] = params["clocks"]["totalTime"].value
             data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
             data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
-            data["BTU"] = data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * 500.4
+            data["BTU"]["value"] = data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * 500.4
 
         queue.put(data)
         elapsedTime = time.time() - startTime
