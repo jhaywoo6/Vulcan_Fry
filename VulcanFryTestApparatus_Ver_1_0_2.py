@@ -575,9 +575,10 @@ class programLoop(Gtk.Window):
         
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
-        
-        self.endDataCollect.clear()
-        self.endTestEvent.clear()
+        if self.testUnderWay == False:
+            self.endDataCollect.clear()
+            self.endTestEvent.clear()
+
         self.temperatureProcess = multiprocessing.Process(
             target=readTemperature, args=(self.endDataCollect,), daemon=True
         )
