@@ -56,6 +56,7 @@ params = {
         "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
         "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Water Out", 1: "Water In", 2: "HX In", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer HX In", 6: "Spare 1", 7: "Spare 2"}},
         "power" : Value('d', 0.00),
+        "BTU": Value('d', 0.00)
     },
     "motor": {
         "pin1": 12,
@@ -202,11 +203,6 @@ def clockTracker(endDataCollect, clock):
         params["clocks"][clock].value = 0  
 
 def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperature, ADS1115Params):
-    try:
-        Temperature = MAX31855(*params["MAX31855Pinout"])
-        print("MAX31855 is connected")
-    except:
-        print("MAX31855 is not connected")
 
     data = {
         "gasFlow": {"value": 0, "unit": "cu ft / sec"},
@@ -217,8 +213,9 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
         "totalTime": {"value": 0, "unit": "sec"},
         "gasUsage": {"value": 0, "unit": "cu ft"},
         "waterUsage": {"value": 0, "unit": "gal"},
-        "waterFlow": {"value": 0, "unit": "gal / sec"},
-        "gasTotalUsage": {"value": 0, "unit": "cu ft"}
+        "waterFlow": {"value": 0, "unit": "gal / min"},
+        "gasTotalUsage": {"value": 0, "unit": "cu ft"},
+        "BTU": {"value": 0, "unit": "BTU"}
     }
 
 
@@ -246,12 +243,13 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
             data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
             data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
             data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
-            data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])
+            data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])*60
             data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
             data["CookTime"]["value"] = params["clocks"]["cookTime"].value
             data["totalTime"]["value"] = params["clocks"]["totalTime"].value
             data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
             data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
+            data["BTU"] = data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * 500.4
 
         queue.put(data)
         elapsedTime = time.time() - startTime
@@ -673,10 +671,10 @@ class programLoop(Gtk.Window):
                 for i, temp in enumerate(self.dataList[-1]['thermocouple no.']['value'])
             )
 
-            keys = ["tempAvg", "wattage", "CookTime", "totalTime", "gasUsage", "waterFlow"]
+            keys = ["gasUsage", "waterFlow", "BTU"]]
             dataUpdateSimple = "\n".join(
-                f"{key.replace('tempAvg', 'Temperature Average').replace('CookTime', 'Cook Time').replace('totalTime', 'Total Time')}: "
-                f"{round(self.dataList[-1][key]['value'], 0) if key in ['CookTime', 'totalTime'] else self.dataList[-1][key]['value']} "
+                f"{key}: "
+                f"{self.dataList[-1][key]['value']} "
                 f"{self.dataList[-1][key]['unit']}"
                 for key in keys
             )
@@ -741,7 +739,8 @@ class programLoop(Gtk.Window):
             "Gas Usage",
             "Water Usage",
             "Gas Total Usage",
-            "Water Total Usage"
+            "Water Total Usage",
+            "BTU"
         ] + [f"{params['sensors']['temperature']['thermocouple name'][i]}" for i in range(params["thermoNum"])]
 
         with open(file_path, 'w', newline='') as file:
@@ -761,7 +760,8 @@ class programLoop(Gtk.Window):
                     entry["gasUsage"]["value"],
                     entry["waterUsage"]["value"],
                     entry["gasTotalUsage"]["value"],
-                    entry["waterFlow"]["value"]
+                    entry["waterFlow"]["value"],
+                    entry["BTU"]["value"]
                 ] + temperatureReadings)
 
         self.stack.set_visible_child_name("dataSaved9")
