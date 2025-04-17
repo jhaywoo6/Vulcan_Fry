@@ -574,26 +574,35 @@ class programLoop(Gtk.Window):
 
     def beginTest(self, *args):
         self.stack.set_visible_child_name("waitForTempTarget3")
+        
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
+        
         self.endDataCollect.clear()
         self.temperatureProcess = multiprocessing.Process(
-                 target=readTemperature, args=(self.endDataCollect, ), daemon=True
-            )
+            target=readTemperature, args=(self.endDataCollect,), daemon=True
+        )
         self.temperatureProcess.start()
-        self.windUpTimeStart = time.time()
-        print((time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000))
-        with params["sensors"]["temperature"]["tempAvg"].get_lock():
-            print(params["sensors"]["temperature"]["tempAvg"].value < self.TargetTemperature)
-            self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
-        while self.tempCheck < self.TargetTemperature or (time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000):
-            print("Has it been windUpTime sec?:", (time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000), " ", (time.time() - self.windUpTimeStart))
-            with params["sensors"]["temperature"]["tempAvg"].get_lock():
-                print("Is tempCheck < Target?:", params["sensors"]["temperature"]["tempAvg"].value < self.TargetTemperature)
-                self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
-            pass
         
-        GLib.timeout_add(params["motor"]["windUpTime"], self.startDataCollection)
+        self.windUpTimeStart = time.time()
+        
+        def check_conditions():
+            elapsed_time = time.time() - self.windUpTimeStart
+            with params["sensors"]["temperature"]["tempAvg"].get_lock():
+                self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
+            
+            print("Elapsed:", elapsed_time)
+            print("TempCheck:", self.tempCheck)
+            print("TargetTemperature:", self.TargetTemperature)
+            
+            if self.tempCheck >= self.TargetTemperature and elapsed_time >= (params["motor"]["windUpTime"] / 1000):
+                self.startDataCollection()
+                return False  # Stop calling this function
+            return True  # Keep checking
+    
+        # Check every 200 ms (adjust if needed)
+        GLib.timeout_add(200, check_conditions)
+
 
     def startDataCollection(self, *args):
         with params["sensors"]["gas"]["tally"].get_lock(), params["sensors"]["water"]["tally"].get_lock():
