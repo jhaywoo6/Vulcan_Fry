@@ -167,7 +167,7 @@ def flowControl(target, endDataCollect, ds3502, DS3502Params):
 
     errorMargin = target * DS3502Params["margin"]
     targetReached = False
-    sleep(params["windUpTime"])
+    sleep(params["windUpTime"]/1000)
 
     while not endDataCollect.is_set():
         with params["sensors"]["temperature"]["tempAvg"].get_lock():
