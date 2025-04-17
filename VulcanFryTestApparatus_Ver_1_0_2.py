@@ -579,8 +579,11 @@ class programLoop(Gtk.Window):
             )
         self.temperatureProcess.start()
         self.windUpTimeStart = time.time()
+        print(time.time() - self.windUpTimeStart)
         while params["sensors"]["temperature"]["tempAvg"].value > self.TargetTemperature and time.time() - self.windUpTimeStart < params["motor"]["windUpTime"]:
+            print(time.time() - self.windUpTimeStart)
             pass
+        print(time.time() - self.windUpTimeStart)
         GLib.timeout_add(params["motor"]["windUpTime"], self.startDataCollection)
 
     def startDataCollection(self, *args):
