@@ -776,6 +776,18 @@ class programLoop(Gtk.Window):
         self.stack.set_visible_child_name("nameFile1")
         return False
 
+    def on_destroy(self, *args):
+        GPIO.output(params["motor"]["pin1"], GPIO.LOW)
+        GPIO.output(params["motor"]["pin2"], GPIO.LOW)
+
+        self.endDataCollect.set()
+        if hasattr(self, "temperatureProcess") and self.temperatureProcess.is_alive():
+            self.temperatureProcess.terminate()
+        if hasattr(self, "dataProcess") and self.dataProcess.is_alive():
+            self.dataProcess.terminate()
+        if hasattr(self, "ControlProcess") and self.ControlProcess.is_alive():
+            self.ControlProcess.terminate()
+        GPIO.cleanup()
 
 def main():
     GPIO.setmode(GPIO.BCM)
@@ -789,7 +801,7 @@ def main():
 
     queue = multiprocessing.Queue()
     app = programLoop(queue)
-    app.connect("destroy", Gtk.main_quit)
+    app.connect("destroy", app.on_destroy)  # Connect the destroy signal to the cleanup method
     app.show_all()
     Gtk.main()
     GPIO.cleanup()
