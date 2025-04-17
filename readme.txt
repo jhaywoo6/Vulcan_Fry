@@ -23,6 +23,8 @@ Upon being powered, the pi will start up the OS (Gnome), and will autostart the 
 Note the E-Stop button. This will cut power to the oil pumps. Press the E-stop button if they behave unexpectedly.
 The program will not be affected by the E-stop, so you can finish these steps when its safe to do so.
 
+This program is designed to stay open as long as the device is powered on.
+There is no reason to close the program at any point.
 If the program is accidentially closed by the user, there are two ways to run it again. Note that all data collected during an active test
 will be lost if the program is closed.
 1. Unpower and repower the pi. Can be done either from the pi itself, the 3 way splitter, or from the wall.
