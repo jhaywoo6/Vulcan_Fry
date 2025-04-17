@@ -583,7 +583,7 @@ class programLoop(Gtk.Window):
         with params["sensors"]["temperature"]["tempAvg"].get_lock():
             print(params["sensors"]["temperature"]["tempAvg"].value > self.TargetTemperature)
             self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
-        while self.tempCheck > self.TargetTemperature and (time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000):
+        while self.tempCheck > self.TargetTemperature or (time.time() - self.windUpTimeStart) < (params["motor"]["windUpTime"]/1000):
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
                 self.tempCheck = params["sensors"]["temperature"]["tempAvg"].value
             pass
