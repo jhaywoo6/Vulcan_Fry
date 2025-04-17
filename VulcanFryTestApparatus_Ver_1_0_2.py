@@ -577,11 +577,12 @@ class programLoop(Gtk.Window):
         GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
         if self.testUnderWay == False:
             self.endDataCollect.clear()
-            self.endTestEvent.clear()
+            self.temperatureProcess = multiprocessing.Process(
+                target=readTemperature, args=(self.endDataCollect,), daemon=True
+            )
 
-        self.temperatureProcess = multiprocessing.Process(
-            target=readTemperature, args=(self.endDataCollect,), daemon=True
-        )
+        self.endTestEvent.clear()
+        
         try:
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, self.ds3502, params["DS3502"]), daemon=True
@@ -672,7 +673,7 @@ class programLoop(Gtk.Window):
                 for i, temp in enumerate(self.dataList[-1]['thermocouple no.']['value'])
             )
 
-            keys = ["gasUsage", "waterFlow", "BTU"]]
+            keys = ["gasUsage", "waterFlow", "BTU"]
             dataUpdateSimple = "\n".join(
                 f"{key}: "
                 f"{self.dataList[-1][key]['value']} "
