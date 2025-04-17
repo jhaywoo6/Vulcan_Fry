@@ -578,12 +578,12 @@ class programLoop(Gtk.Window):
                  target=readTemperature, args=(self.endDataCollect, ), daemon=True
             )
         self.temperatureProcess.start()
-        sleep(params["windUpTime"])
-        while params["sensors"]["temperature"]["tempAvg"].value > self.TargetTemperature:
+        self.windUpTimeStart = time.time()
+        while params["sensors"]["temperature"]["tempAvg"].value > self.TargetTemperature and time.time() - self.windUpTimeStart < params["motor"]["windUpTime"]:
             pass
         GLib.timeout_add(params["motor"]["windUpTime"], self.startDataCollection)
 
-    def startDataCollection(self):
+    def startDataCollection(self, *args):
         with params["sensors"]["gas"]["tally"].get_lock(), params["sensors"]["water"]["tally"].get_lock():
             params["sensors"]["gas"]["tally"].value = 0.00
             params["sensors"]["water"]["tally"].value = 0.00
