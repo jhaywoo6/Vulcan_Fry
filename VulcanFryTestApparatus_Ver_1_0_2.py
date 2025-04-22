@@ -583,6 +583,7 @@ class programLoop(Gtk.Window):
             self.temperatureProcess = multiprocessing.Process(
                 target=readTemperature, args=(self.endDataCollect,), daemon=True
             )
+            self.temperatureProcess.start()
 
         self.endTestEvent.clear()
         try:
@@ -593,7 +594,7 @@ class programLoop(Gtk.Window):
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, -1, params["DS3502"]), daemon=True
             )
-        self.temperatureProcess.start()
+        
         self.ControlProcess.start()
         self.windUpTimeStart = time.time()
         
@@ -768,6 +769,11 @@ class programLoop(Gtk.Window):
         self.endTestEvent.set()
         self.temperatureProcess.join()
         self.ControlProcess.join()
+        self.dataProcess.join()
+        self.GasProcess.join()
+        self.WaterProcess.join()
+        self.totalTimeProcess.join()
+        self.powerProcess.join()
         self.stack.set_visible_child_name("nameFile1")
         return False
 
