@@ -546,14 +546,15 @@ class programLoop(Gtk.Window):
                         return -1
                 self.wattChan = WattChanFallback()
                 print("ADS1115 is not connected")
-            try:
-                self.I2C = busio.I2C(board.SCL, board.SDA)
-                self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
-                self.ds3502.wiper(params["DS3502"]["setValveDefault"])
-                print("DS3502 is connected")
+            #try:
+            self.I2C = busio.I2C(board.SCL, board.SDA)
+            self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
+            self.ds3502.wiper(params["DS3502"]["setValveDefault"])
+            print("DS3502 is connected")
+            """
             except:
                 print("DS3502 is not connected")
-
+            """
             try:
                 self.Temperature = MAX31855(*params["MAX31855Pinout"])
                 print("MAX31855 is connected")
