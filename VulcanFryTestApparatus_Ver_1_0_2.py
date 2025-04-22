@@ -583,7 +583,6 @@ class programLoop(Gtk.Window):
             )
 
         self.endTestEvent.clear()
-        
         try:
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, self.ds3502, params["DS3502"]), daemon=True
@@ -593,7 +592,7 @@ class programLoop(Gtk.Window):
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, -1, params["DS3502"]), daemon=True
             )
         self.temperatureProcess.start()
-        
+        self.ControlProcess.start()
         self.windUpTimeStart = time.time()
         
         def check_conditions():
