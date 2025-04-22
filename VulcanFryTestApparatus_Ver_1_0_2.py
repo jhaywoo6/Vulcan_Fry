@@ -156,7 +156,7 @@ def readTemperature(endDataCollect):
                     params["significantFigures"]
                 )
 
-def flowControl(target, endDataCollect, ds3502, DS3502Params):
+def flowControl(target, endTestEvent, ds3502, DS3502Params):
     print("Flow Ctrl start")
     setValve = 0  # 0 Open, 127 Closed
 
@@ -171,7 +171,7 @@ def flowControl(target, endDataCollect, ds3502, DS3502Params):
     targetReached = False
     sleep(params["windUpTime"]/1000)
 
-    while not endDataCollect.is_set():
+    while not endTestEvent.is_set():
         with params["sensors"]["temperature"]["tempAvg"].get_lock():
             tempAvg = params["sensors"]["temperature"]["tempAvg"].value
         if abs(target - tempAvg) > errorMargin or targetReached == False:
@@ -641,8 +641,6 @@ class programLoop(Gtk.Window):
             target=clockTracker, args=(self.endTestEvent, "currentTestTime"), daemon=True
         )
         
-
-        self.ControlProcess.start()
         self.currentTestTimeProcess.start()
         
         self.stack.set_visible_child_name("dataCollection4Simple")
@@ -765,7 +763,9 @@ class programLoop(Gtk.Window):
         GPIO.output(params["motor"]["pin1"], GPIO.LOW)
         GPIO.output(params["motor"]["pin2"], GPIO.LOW)
         self.endDataCollect.set()
+        self.endTestEvent.set()
         self.temperatureProcess.join()
+        self.ControlProcess.join()
         self.stack.set_visible_child_name("nameFile1")
         return False
 
