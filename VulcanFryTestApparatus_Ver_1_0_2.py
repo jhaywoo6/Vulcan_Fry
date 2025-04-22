@@ -24,7 +24,7 @@ from max31855 import MAX31855
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gdk
 
-thermoNum = 6
+thermoNum = 7
 
 params = {
     "MAX31855Pinout": (11, 8, 9, 17, 27, 22),
@@ -54,7 +54,7 @@ params = {
     "sensors": {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in cu ft / sec
         "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in Gal/Sec. Multiplied by 60 to get Gal/Min.
-        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Water Out", 1: "Water In", 2: "HX In", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer HX In", 6: "Spare 1", 7: "Spare 2"}},
+        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Water Out", 1: "Water In", 2: "HX In", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer HX In", 6: "Fryer Actual", 7: "Spare 1"}},
         "power" : Value('d', 0.00),
         "BTU": Value('d', 0.00)
     },
@@ -74,7 +74,8 @@ params = {
     "defaultFileName": "Test",
     "significantFigures": 2,
     "returnFarenheit": True,  # Set to True to return Farenheit, False for Celsius
-    "windUpTime": 10000 # Time in miliseconds untill temperature target is checked. Idle Oil in apparatus is expected to be cool before a test starts untill hot oil begins flowing from the fryer?
+    "windUpTime": 10000, # Time in miliseconds untill temperature target is checked. Idle Oil in apparatus is expected to be cool before a test starts untill hot oil begins flowing from the fryer?
+    "oilDensity": 500.4
 }    
 
 # Adds a number to the end of the file name if it already exists. Test, Test(1), Test(2), ect.
@@ -250,8 +251,8 @@ def getData(queue, endDataCollect):
             data["totalTime"]["value"] = params["clocks"]["totalTime"].value
             data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
             data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
-            data["BTU"]["value"] = data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * 500.4
-            # BTU = Water Flow Rate * (Water out - Water in) * 500.4
+            data["BTU"]["value"] = round(data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * params["oilDensity"], params["significantFigures"])
+            # BTU = Water Flow Rate * (Water out - Water in) * oilDensity
             # BTU = Mass * Temperature Change * Specific Heat
  
         queue.put(data)
@@ -662,19 +663,19 @@ class programLoop(Gtk.Window):
             if len(self.dataList) >= params["dataListMaxLength"]: 
                 self.dataList.pop(0)
             dataUpdateDetailedValues = "\n".join(
-                f"{key}: {self.dataList[-1][key]['value']} {self.dataList[-1][key]['unit']}"
+                f"{key}: {self.dataList[-1][key]['value']:.2f} {self.dataList[-1][key]['unit']}"
                 for key in self.dataList[-1] if key != "thermocouple no."
             )
 
             dataUpdateDetailedTemps = "\n".join(
-                f"{params['sensors']['temperature']['thermocouple name'][i]}: {temp} {self.dataList[-1]['thermocouple no.']['unit']}"
+                f"{params['sensors']['temperature']['thermocouple name'][i]}: {temp:.2f} {self.dataList[-1]['thermocouple no.']['unit']}"
                 for i, temp in enumerate(self.dataList[-1]['thermocouple no.']['value'])
             )
 
             keys = ["gasUsage", "waterFlow", "BTU"]
             dataUpdateSimple = "\n".join(
                 f"{key}: "
-                f"{self.dataList[-1][key]['value']} "
+                f"{self.dataList[-1][key]['value']:.2f} "
                 f"{self.dataList[-1][key]['unit']}"
                 for key in keys
             )
