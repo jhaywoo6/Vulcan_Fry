@@ -549,7 +549,7 @@ class programLoop(Gtk.Window):
             #try:
             self.I2C = busio.I2C(board.SCL, board.SDA)
             self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
-            self.ds3502.wiper(params["DS3502"]["setValveDefault"])
+            self.ds3502.wiper = params["DS3502"]["setValveDefault"]
             print("DS3502 is connected")
             """
             except:
