@@ -258,7 +258,7 @@ def getData(queue, endDataCollect):
         elapsedTime = time.time() - startTime
         if elapsedTime > params["DataCollectionFrequency"]:
             params["DataCollectionFrequency"] = elapsedTime
-            print(f"DataCollectionFrequency adjusted to {params["DataCollectionFrequency"]}. Optimizations needed to reach requested rate.")
+            print(f"DataCollectionFrequency adjusted to {params['DataCollectionFrequency']}. Optimizations needed to reach requested rate.")
         time.sleep(params["DataCollectionFrequency"])
 
 def pulseCounter(sensorName, endDataCollect):
