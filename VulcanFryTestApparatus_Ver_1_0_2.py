@@ -42,7 +42,7 @@ params = {
         "TargetTemperatureDefault": 350,
         "setValveDefault": 127,
         "valveAdjustmentFrequency": 0.05,
-        "margin": 0.05 # The allowed variance in temperature once target is reached before the valve attempts to correct to target again.
+        "margin": 0.05 # The allowed variance in temperature by percentage once target is reached before the valve attempts to correct to target again.
     },
     "TargetTemperatureOptions": { # The target average temperature to reach. The flow control valve will read tempAvg and then open the valve untill 
         "Option A": 310,
@@ -52,8 +52,8 @@ params = {
         "Option E": 350
     },
     "sensors": {
-        "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
-        "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)},
+        "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in cu ft / sec
+        "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in Gal/Sec. Multiplied by 60 to get Gal/Min.
         "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Water Out", 1: "Water In", 2: "HX In", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer HX In", 6: "Spare 1", 7: "Spare 2"}},
         "power" : Value('d', 0.00),
         "BTU": Value('d', 0.00)
@@ -66,7 +66,7 @@ params = {
     "thermoNum": thermoNum,
     "DataCollectionFrequency": 1, # Reading the MAX31855, the fastest this can go is ~0.88.
     "clocks": {
-        "cookTime": Value(c_double, 0.00),
+        "currentTestTime": Value(c_double, 0.00),
         "totalTime": Value(c_double, 0.00)
     },
     "dataListMaxLength": 2147483647,
@@ -75,7 +75,26 @@ params = {
     "significantFigures": 2,
     "returnFarenheit": True,  # Set to True to return Farenheit, False for Celsius
     "windUpTime": 10000 # Time in miliseconds untill temperature target is checked. Idle Oil in apparatus is expected to be cool before a test starts untill hot oil begins flowing from the fryer?
-}
+}    
+
+# Adds a number to the end of the file name if it already exists. Test, Test(1), Test(2), ect.
+
+def duplicateLabeler(filepath):
+    base, ext = os.path.splitext(filepath)
+    num = 1
+
+    while os.path.exists(filepath):
+        filepath = f"{base} ({num}){ext}"
+        num += 1
+
+    return filepath
+
+# Looping functions. These are started by programLoop after selecting self.waitToBegin2button = Gtk.Button(label="Begin Test")
+# The current test ends after selecting self.dataCollection4SimpleEndTestButton = Gtk.Button(label="End Test")
+# A new test starts after selecting self.continueTestingQuerry6NextTest = Gtk.Button(label="Click to begin the next test.")
+# Between tests currentTestTime is stopped and set to 0
+# Between tests flowControl is set to close the valve
+# All other functions run and collect data during and between tests until self.continueTestingQuerry6EndTesting = Gtk.Button(label="Click to end testing.") is pressed.
 
 def readPower(chan, endDataCollect):
     rawVrms = 0.0
@@ -98,9 +117,8 @@ def readPower(chan, endDataCollect):
 def readTemperature(endDataCollect):
     try:
         Temperature = MAX31855(*params["MAX31855Pinout"])
-        print("MAX31855 is connected")
     except:
-        print("MAX31855 is not connected")
+        None
 
     if len(params["sensors"]["temperature"]["thermocouple no."]) < 8:
             params["sensors"]["temperature"]["thermocouple no."].extend(["Unused"] * (8 - len(params["sensors"]["temperature"]["thermocouple no."])))
@@ -136,35 +154,18 @@ def readTemperature(endDataCollect):
                         for i in range(params["thermoNum"])
                     ]),
                     params["significantFigures"]
-                )    
-
-# Adds a number to the end of the file name if it already exists. Test, Test(1), Test(2), ect.
-
-def duplicateLabeler(filepath):
-    base, ext = os.path.splitext(filepath)
-    num = 1
-
-    while os.path.exists(filepath):
-        filepath = f"{base} ({num}){ext}"
-        num += 1
-
-    return filepath
-
-# Looping functions. These are started by programLoop after selecting self.waitToBegin2button = Gtk.Button(label="Begin Test")
-# The current test ends after selecting self.dataCollection4SimpleEndTestButton = Gtk.Button(label="End Test")
-# A new test starts after selecting self.continueTestingQuerry6NextTest = Gtk.Button(label="Click to begin the next test.")
-# Between tests cookTime is stopped and set to 0
-# Between tests flowControl is set to close the valve
-# All other functions run and collect data during and between tests until self.continueTestingQuerry6EndTesting = Gtk.Button(label="Click to end testing.") is pressed.
+                )
 
 def flowControl(target, endDataCollect, ds3502, DS3502Params):
+    print("Flow Ctrl start")
     setValve = 0  # 0 Open, 127 Closed
 
     try:
         ds3502.wiper = setValve
-        print("DS3502 is connected")
+        print("Valve set to 0, should be Opening")
     except:
-        print("DS3502 is not connected")
+        print("Wiper Failure")
+        None
 
     errorMargin = target * DS3502Params["margin"]
     targetReached = False
@@ -202,14 +203,14 @@ def clockTracker(endDataCollect, clock):
     with params["clocks"][clock].get_lock():
         params["clocks"][clock].value = 0  
 
-def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperature, ADS1115Params):
+def getData(queue, endDataCollect):
 
     data = {
         "gasFlow": {"value": 0, "unit": "cu ft / sec"},
         "thermocouple no.": {"value" : [0 for _ in range(params["thermoNum"])], "unit": "F"},
         "tempAvg": {"value": 0, "unit": "F"},
         "wattage": {"value": 0, "unit": "W"},
-        "CookTime": {"value": 0, "unit": "sec"},
+        "currentTestTime": {"value": 0, "unit": "sec"},
         "totalTime": {"value": 0, "unit": "sec"},
         "gasUsage": {"value": 0, "unit": "cu ft"},
         "waterUsage": {"value": 0, "unit": "gal"},
@@ -234,7 +235,7 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
             stack.enter_context(params["sensors"]["water"]["flowRate"].get_lock())
             stack.enter_context(params["sensors"]["gas"]["totalTally"].get_lock())
             stack.enter_context(params["sensors"]["water"]["totalTally"].get_lock())
-            stack.enter_context(params["clocks"]["cookTime"].get_lock())
+            stack.enter_context(params["clocks"]["currentTestTime"].get_lock())
             stack.enter_context(params["clocks"]["totalTime"].get_lock())
 
             for tc in params["sensors"]["temperature"]["thermocouple no."]:
@@ -245,20 +246,22 @@ def getData(queue, endDataCollect, wattChan, DataCollectionFrequency, Temperatur
             data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
             data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])*60
             data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
-            data["CookTime"]["value"] = params["clocks"]["cookTime"].value
+            data["currentTestTime"]["value"] = params["clocks"]["currentTestTime"].value
             data["totalTime"]["value"] = params["clocks"]["totalTime"].value
             data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
             data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
             data["BTU"]["value"] = data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * 500.4
-
+            # BTU = Water Flow Rate * (Water out - Water in) * 500.4
+            # BTU = Mass * Temperature Change * Specific Heat
+ 
         queue.put(data)
         elapsedTime = time.time() - startTime
-        if elapsedTime > DataCollectionFrequency:
-            DataCollectionFrequency = elapsedTime
-            print(f"DataCollectionFrequency adjusted to {DataCollectionFrequency}. Optimizations needed to reach requested rate.")
-        time.sleep(DataCollectionFrequency)
+        if elapsedTime > params["DataCollectionFrequency"]:
+            params["DataCollectionFrequency"] = elapsedTime
+            print(f"DataCollectionFrequency adjusted to {params["DataCollectionFrequency"]}. Optimizations needed to reach requested rate.")
+        time.sleep(params["DataCollectionFrequency"])
 
-def pulseCounter(sensorName, endDataCollect, dataCollectionFrequency):
+def pulseCounter(sensorName, endDataCollect):
     sensor = params["sensors"][sensorName]
     edge_count = 0
     last_state = GPIO.LOW
@@ -273,13 +276,13 @@ def pulseCounter(sensorName, endDataCollect, dataCollectionFrequency):
         if current_state == GPIO.HIGH and last_state == GPIO.LOW:
             edge_count += 1
 
-        if time.time() >= timeTracker + dataCollectionFrequency:
+        if time.time() >= timeTracker + params["DataCollectionFrequency"]:
             instantaneous_flow = edge_count / sensor["pulses_per_unit"]
 
             with sensor["tally"].get_lock(), sensor["totalTally"].get_lock(), sensor["flowRate"].get_lock():
                 sensor["tally"].value += instantaneous_flow
                 sensor["totalTally"].value += instantaneous_flow
-                sensor["flowRate"].value = instantaneous_flow / dataCollectionFrequency   
+                sensor["flowRate"].value = instantaneous_flow / params["DataCollectionFrequency"]   
 
             timeTracker = time.time()
             edge_count = 0
@@ -347,10 +350,10 @@ class programLoop(Gtk.Window):
         self.nameFile1label.set_yalign(0)
 
         self.nameFile1Entry = Gtk.Entry()
-        self.nameFile1Entry.connect("key-press-event", self.saveFileName1)
+        self.nameFile1Entry.connect("key-press-event", self.saveFileName)
 
         self.nameFile1TargetTemperature = Gtk.Entry()
-        self.nameFile1TargetTemperature.connect("key-press-event", self.saveFileName1)
+        self.nameFile1TargetTemperature.connect("key-press-event", self.saveFileName)
 
         self.nameFile1TargetTemperaturePopover = Gtk.Popover()
         self.nameFile1TargetTemperaturePopover.set_relative_to(self.nameFile1TargetTemperature)
@@ -371,7 +374,7 @@ class programLoop(Gtk.Window):
         self.nameFile1TargetTemperature.connect("focus-in-event", self.showPopover)
 
         self.nameFile1NextButton = Gtk.Button(label="Next")
-        self.nameFile1NextButton.connect("clicked", self.saveFileName1)
+        self.nameFile1NextButton.connect("clicked", self.saveFileName)
 
         self.nameFile1.pack_start(self.nameFile1Entry, False, False, 10)
         self.nameFile1.pack_start(self.nameFile1TargetTemperature, False, False, 10)
@@ -513,7 +516,7 @@ class programLoop(Gtk.Window):
         self.dataSaved9.pack_start(self.dataSave9Label, True, True, 0)
         self.stack.add_named(self.dataSaved9, "dataSaved9")
     
-    def saveFileName1(self, widget, event = None):
+    def saveFileName(self, widget, event = None):
 
         if event == None or event.keyval == Gdk.KEY_Return:
             if self.nameFile1Entry.get_text().strip():
@@ -529,12 +532,11 @@ class programLoop(Gtk.Window):
             )
             self.textUserDataCheckMarkup = f"<span size='large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
 
-        
-            self.I2C = busio.I2C(board.SCL, board.SDA)
-            self.ads = ADS.ADS1115(i2c = self.I2C, address = params["ADS1115"]["ADSAddress"], gain = params["ADS1115"]["ADSGain"])
-            self.wattChan = AnalogIn(self.ads, ADS.P0, ADS.P1)
-            print("ADS1115 is connected")
-            """
+            try:
+                self.I2C = busio.I2C(board.SCL, board.SDA)
+                self.ads = ADS.ADS1115(i2c = self.I2C, address = params["ADS1115"]["ADSAddress"], gain = params["ADS1115"]["ADSGain"])
+                self.wattChan = AnalogIn(self.ads, ADS.P0, ADS.P1)
+                print("ADS1115 is connected")
             except:
                 class WattChanFallback:
                     @property
@@ -544,7 +546,6 @@ class programLoop(Gtk.Window):
                         return -1
                 self.wattChan = WattChanFallback()
                 print("ADS1115 is not connected")
-            """
             try:
                 self.I2C = busio.I2C(board.SCL, board.SDA)
                 self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
@@ -608,7 +609,6 @@ class programLoop(Gtk.Window):
         # Check every 200 ms (adjust if needed)
         GLib.timeout_add(200, check_conditions)
 
-
     def startDataCollection(self, *args):
         with params["sensors"]["gas"]["tally"].get_lock(), params["sensors"]["water"]["tally"].get_lock():
             params["sensors"]["gas"]["tally"].value = 0.00
@@ -616,13 +616,13 @@ class programLoop(Gtk.Window):
 
         if self.testUnderWay == False:
             self.dataProcess = multiprocessing.Process(
-                target=getData, args=(self.queue, self.endDataCollect, self.wattChan, params["DataCollectionFrequency"], self.Temperature, params["ADS1115"]), daemon=True
+                target=getData, args=(self.queue, self.endDataCollect), daemon=True
             )
             self.GasProcess = multiprocessing.Process(
-                target=pulseCounter, args=("gas", self.endDataCollect, params["DataCollectionFrequency"]), daemon=True
+                target=pulseCounter, args=("gas", self.endDataCollect), daemon=True
             )
             self.WaterProcess = multiprocessing.Process(
-                target=pulseCounter, args=("water", self.endDataCollect, params["DataCollectionFrequency"]), daemon=True
+                target=pulseCounter, args=("water", self.endDataCollect), daemon=True
             )
             self.totalTimeProcess = multiprocessing.Process(
                 target=clockTracker, args=(self.endDataCollect, "totalTime"), daemon=True
@@ -638,13 +638,13 @@ class programLoop(Gtk.Window):
             self.testUnderWay = True
         
         
-        self.cookTimeProcess = multiprocessing.Process(
-            target=clockTracker, args=(self.endTestEvent, "cookTime"), daemon=True
+        self.currentTestTimeProcess = multiprocessing.Process(
+            target=clockTracker, args=(self.endTestEvent, "currentTestTime"), daemon=True
         )
         
 
         self.ControlProcess.start()
-        self.cookTimeProcess.start()
+        self.currentTestTimeProcess.start()
         
         self.stack.set_visible_child_name("dataCollection4Simple")
         return False
@@ -659,8 +659,6 @@ class programLoop(Gtk.Window):
         
         while not self.queue.empty():
             self.dataList.append(self.queue.get())
-            print("Data count:")
-            print(len(self.dataList))
             if len(self.dataList) >= params["dataListMaxLength"]: 
                 self.dataList.pop(0)
             dataUpdateDetailedValues = "\n".join(
@@ -688,19 +686,13 @@ class programLoop(Gtk.Window):
         return True
 
     def endTest(self, *args):
-        print("endTestRan")
         GPIO.output(params["motor"]["pin1"], GPIO.LOW)
         GPIO.output(params["motor"]["pin2"], GPIO.LOW)
-        print("Relays Set")
         self.endTestEvent.set()
-        print("endTestEvent set. Waiting for Control Process to join")
         self.ControlProcess.join()
-        print("endTestEvent set. Waiting for cook time Process to join")
-        self.cookTimeProcess.join()
-        print("setting window")
+        self.currentTestTimeProcess.join()
         self.stack.set_visible_child_name("motorWindDown5")
         self.motor.value = 0
-        print(params["motor"]["windUpTime"])
         GLib.timeout_add(params["motor"]["windUpTime"], self.continueTestingQuerry)
 
     def continueTestingQuerry(self):
@@ -757,7 +749,7 @@ class programLoop(Gtk.Window):
                     entry["gasFlow"]["value"],
                     entry["tempAvg"]["value"],
                     entry["wattage"]["value"],
-                    entry["CookTime"]["value"],
+                    entry["currentTestTime"]["value"],
                     entry["totalTime"]["value"],
                     entry["gasUsage"]["value"],
                     entry["waterUsage"]["value"],
@@ -791,7 +783,7 @@ class programLoop(Gtk.Window):
             self.ControlProcess.terminate()
         GPIO.cleanup()
 
-def main():
+if __name__ == "__main__":
     GPIO.setmode(GPIO.BCM)
 
     # Sets up two relays to control two pumps
@@ -807,6 +799,3 @@ def main():
     app.show_all()
     Gtk.main()
     GPIO.cleanup()
-
-if __name__ == "__main__":
-    main()
