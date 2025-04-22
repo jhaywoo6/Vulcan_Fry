@@ -175,7 +175,7 @@ def flowControl(target, endTestEvent, ds3502, DS3502Params):
         with params["sensors"]["temperature"]["tempAvg"].get_lock():
             tempAvg = params["sensors"]["temperature"]["tempAvg"].value
         if abs(target - tempAvg) > errorMargin or targetReached == False:
-            setValve = max(0, min(127, setValve + (1 if target > tempAvg else -1)))
+            setValve = max(0, min(127, setValve + (-1 if target > tempAvg else 1)))
             if targetReached == True:
                  targetReached = False
             if abs(target - tempAvg) < errorMargin:
