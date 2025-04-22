@@ -40,7 +40,7 @@ params = {
     "DS3502": {
         "DSAddress": 0x28,
         "TargetTemperatureDefault": 350,
-        "setValveDefault": 127,
+        "setValveDefault": 0,
         "valveAdjustmentFrequency": 0.05,
         "margin": 0.05 # The allowed variance in temperature by percentage once target is reached before the valve attempts to correct to target again.
     },
@@ -158,7 +158,7 @@ def readTemperature(endDataCollect):
 
 def flowControl(target, endTestEvent, ds3502, DS3502Params):
     print("Flow Ctrl start")
-    setValve = 0  # 0 Open, 127 Closed
+    setValve = 127  # 0 Closed, 127 Open
 
     try:
         ds3502.wiper = setValve
@@ -549,6 +549,7 @@ class programLoop(Gtk.Window):
             try:
                 self.I2C = busio.I2C(board.SCL, board.SDA)
                 self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
+                self.ds3502.wiper(params["DS3502"]["setValveDefault"])
                 print("DS3502 is connected")
             except:
                 print("DS3502 is not connected")
