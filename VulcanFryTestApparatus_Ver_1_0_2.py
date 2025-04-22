@@ -137,7 +137,7 @@ def readTemperature(endDataCollect):
                params["sensors"]["temperature"]["tempAvg"].value = round(
                     np.mean([
                         params["sensors"]["temperature"]["thermocouple no."][i].value
-                        for i in range(params["thermoNum"])
+                        for i in range(2, params["thermoNum"])
                     ]),
                     params["significantFigures"]
                 )
@@ -151,7 +151,7 @@ def readTemperature(endDataCollect):
                 params["sensors"]["temperature"]["tempAvg"].value = round(
                     np.mean([
                         params["sensors"]["temperature"]["thermocouple no."][i].value
-                        for i in range(params["thermoNum"])
+                        for i in range(2, params["thermoNum"])
                     ]),
                     params["significantFigures"]
                 )
