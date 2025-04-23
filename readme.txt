@@ -203,6 +203,7 @@ Unpin all but Files
 Pin terminal, web browser of choice (firefox recommended), geany, task manager, settings, tweaker
 In Settings:
 Power > Screen Blank > Never
+Power > Dim > Off
 Accessibility > Enable Animations (Disable) & Always Show Accessibility Menu (Enable) & Screen Keyboard (Enable)
 Users > Unlock > Enter Password > Automatic Login (Enable)
 In Tweaker:
