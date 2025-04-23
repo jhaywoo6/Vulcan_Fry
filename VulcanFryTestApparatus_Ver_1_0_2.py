@@ -44,7 +44,7 @@ params = {
         "valveAdjustmentFrequency": 0.05,
         "margin": 0.05 # The allowed variance in temperature by percentage once target is reached before the valve attempts to correct to target again.
     },
-    "TargetTemperatureOptions": { # The target average temperature to reach. The flow control valve will read tempAvg and then open the valve untill 
+    "TargetTemperatureOptions": { # The target average temperature to reach. The flow control valve will read Fryer Actual and then open the valve until temperature is reached.
         "Option A": 310,
         "Option B": 320,
         "Option C": 330,
@@ -97,6 +97,21 @@ def duplicateLabeler(filepath):
 # Between tests flowControl is set to close the valve
 # All other functions run and collect data during and between tests until self.continueTestingQuerry6EndTesting = Gtk.Button(label="Click to end testing.") is pressed.
 
+# The Octo MAX31855 appears to read colder temperatures as hotter than expected, but higher temps can be read accuratly after a long enough period of time. This is a bandaid fix.
+def calibratedTemp(raw_temp):
+    threshold = 150.0
+
+    if raw_temp >= threshold:
+        return raw_temp
+
+    max_offset = 20.0
+    min_temp = 40.0
+
+    scale = (threshold - raw_temp) / (threshold - min_temp)
+    offset = max_offset * scale
+
+    return raw_temp - offset
+
 def readPower(chan, endDataCollect):
     rawVrms = 0.0
     samples = params['ADS1115']['ADSSamples']
@@ -130,9 +145,9 @@ def readTemperature(endDataCollect):
                 Temperature.read_data(i)
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                     if params["returnFarenheit"]:
-                        params["sensors"]["temperature"]["thermocouple no."][i].value = round((Temperature.get_thermocouple_temp() * (9/5)) + 32, params["significantFigures"])
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = calibratedTemp(round((Temperature.get_thermocouple_temp() * (9/5)) + 32, params["significantFigures"]))
                     else:
-                        params["sensors"]["temperature"]["thermocouple no."][i].value = Temperature.get_thermocouple_temp()
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = calibratedTemp(Temperature.get_thermocouple_temp())
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
                params["sensors"]["temperature"]["tempAvg"].value = round(
@@ -173,8 +188,8 @@ def flowControl(target, endTestEvent, ds3502, DS3502Params):
     sleep(params["windUpTime"]/1000)
 
     while not endTestEvent.is_set():
-        with params["sensors"]["temperature"]["tempAvg"].get_lock():
-            tempAvg = params["sensors"]["temperature"]["tempAvg"].value
+        with params["sensors"]["temperature"]["thermocouple no."][7].get_lock():
+            tempAvg = params["sensors"]["temperature"]["thermocouple no."][7].value
         if abs(target - tempAvg) > errorMargin or targetReached == False:
             setValve = max(0, min(127, setValve + (-1 if target > tempAvg else 1)))
             if targetReached == True:
