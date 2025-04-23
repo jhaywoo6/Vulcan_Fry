@@ -82,9 +82,9 @@ This program uses GPIO pins to communicate with other boards specialized in coll
 Here is the default pinout in relation to the device it connects with:
 
 MAX31855
-# Pin # 23, 24, 21, 11, 13, 15
-# GPIO # 11, 8, 9, 17, 27, 22
-# SCK, CS, S0, T0, T1, T2
+# Pin # 23, 24, 21, 11, 13, 15, 12, 16, 18
+# GPIO # 11, 8, 9, 17, 27, 22, 18, 23, 24
+# SCK, CS0, S0, CS1, CS2, CS3, CS4, CS5
 # MISO
 # Thermocouples wired to this device should be wired from 0 to 7. 
 # If a port can't be used 
