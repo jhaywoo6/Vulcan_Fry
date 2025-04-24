@@ -562,12 +562,12 @@ class programLoop(Gtk.Window):
                 8: board.CE0,
                 9: board.MISO,
                 11: board.SCK,
-                17: board.GPIO17,
-                18: board.GPIO18,
-                22: board.GPIO22,
-                23: board.GPIO23,
-                24: board.GPIO24,
-                27: board.GPIO27,
+                17: board.D17,
+                18: board.D18,
+                22: board.D22,
+                23: board.D23,
+                24: board.D24,
+                27: board.D27,
             }
             sclk = gpio_to_board[gpio_sclk]
             miso = gpio_to_board[gpio_miso]
