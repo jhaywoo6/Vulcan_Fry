@@ -142,6 +142,7 @@ def readTemperature(endDataCollect, sensors):
                     ]),
                     params["significantFigures"]
                 )
+            sleep(params["DataCollectionFrequency"])
     except:
         while not endDataCollect.is_set():
             for i in range(params["thermoNum"]):
@@ -241,22 +242,14 @@ def getData(queue, endDataCollect):
                 stack.enter_context(tc.get_lock())
 
             data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
-            print("gasUsage gotten")
             data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
-            print("waterUsage gotten")
             data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
-            print("gasFlow gotten")
             data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])*60
-            print("waterFlow gotten")
             data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
-            print("gasTotalUsage gotten")
             data["currentTestTime"]["value"] = params["clocks"]["currentTestTime"].value
-            print("currentTestTime gotten")
             data["totalTime"]["value"] = params["clocks"]["totalTime"].value
-            print("totalTime gotten")
             data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
-            print("thermocouple no. gotten")
-            data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
+            data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value #Hangs
             print("tempAvg gotten")
             data["BTU"]["value"] = round(data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * params["oilDensity"], params["significantFigures"])
             print("BTU gotten")
