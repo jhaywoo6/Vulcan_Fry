@@ -119,20 +119,27 @@ def readPower(chan, endDataCollect):
             params['sensors']['power'].value = 0
 
 def readTemperature(endDataCollect, sensors):
-
+    print("Read Started")
     if len(params["sensors"]["temperature"]["thermocouple no."]) < 8:
             params["sensors"]["temperature"]["thermocouple no."].extend(["Unused"] * (8 - len(params["sensors"]["temperature"]["thermocouple no."])))
-
+    print("List Extended")
     try:
         while not endDataCollect.is_set():
+            print("Loop start")
             for i in range(params["thermoNum"]):
+                print("Itterating through thermoNum")
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
+                    print("Lock Gotten")
                     if params["returnFarenheit"]:
+                        print(i)
                         if i == 3:
+                            print("Reading Max31855 No.3")
                             params["sensors"]["temperature"]["thermocouple no."][i].value = round((sensors[i].temperature * (9/5)) + 32, params["significantFigures"])
                         else:
+                            print("Defaulting to -1")
                             params["sensors"]["temperature"]["thermocouple no."][i].value = -1
                     else:
+                        print("Returning C")
                         params["sensors"]["temperature"]["thermocouple no."][i].value = sensors[i].temperature
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
