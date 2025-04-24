@@ -557,7 +557,7 @@ class programLoop(Gtk.Window):
             
             gpio_sclk = params["MAX31855Pinout"][0]   # GPIO11
             gpio_miso = params["MAX31855Pinout"][2]   # GPIO9
-            cs_gpios  = params["MAX31855Pinout"][1] + params["MAX31855Pinout"][3:]
+            cs_gpios  = (params["MAX31855Pinout"][1],) + params["MAX31855Pinout"][3:]
             gpio_to_board = {
                 8: board.CE0,
                 9: board.MISO,
