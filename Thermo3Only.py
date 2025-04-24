@@ -599,28 +599,23 @@ class programLoop(Gtk.Window):
         
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
-        print("Starting tests")
         if self.testUnderWay == False:
             self.endDataCollect.clear()
             self.temperatureProcess = multiprocessing.Process(
                 target=readTemperature, args=(self.endDataCollect, self.sensors), daemon=True
             )
             self.temperatureProcess.start()
-        print("Temp Process started")
         self.endTestEvent.clear()
         try:
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, self.ds3502, params["DS3502"]), daemon=True
             )
-            print("Ctrl Process with DS3502")
         except:
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, -1, params["DS3502"]), daemon=True
             )
-            print("Ctrl process without DS3502")
         
         self.ControlProcess.start()
-        print("ctrl process started")
         self.windUpTimeStart = time.time()
         
         def check_conditions():
@@ -641,7 +636,6 @@ class programLoop(Gtk.Window):
         with params["sensors"]["gas"]["tally"].get_lock(), params["sensors"]["water"]["tally"].get_lock():
             params["sensors"]["gas"]["tally"].value = 0.00
             params["sensors"]["water"]["tally"].value = 0.00
-        print("Locks Gotten")
         if self.testUnderWay == False:
             self.dataProcess = multiprocessing.Process(
                 target=getData, args=(self.queue, self.endDataCollect), daemon=True
@@ -659,15 +653,10 @@ class programLoop(Gtk.Window):
                 target=readPower, args=(self.wattChan, self.endDataCollect), daemon=True
             )
             self.dataProcess.start()
-            print("Data start")
             self.GasProcess.start()
-            print("Gas start")
             self.WaterProcess.start()
-            print("water start")
             self.totalTimeProcess.start()
-            print("time start")
             self.powerProcess.start()
-            print("Power start")
             self.testUnderWay = True
         
         
@@ -676,7 +665,6 @@ class programLoop(Gtk.Window):
         )
         
         self.currentTestTimeProcess.start()
-        print("Current start")
         
         self.stack.set_visible_child_name("dataCollection4Simple")
         return False
@@ -688,11 +676,13 @@ class programLoop(Gtk.Window):
         self.stack.set_visible_child_name("dataCollection4Simple")
 
     def checkQueue(self):
-        
+        print("Check Queue start")
         while not self.queue.empty():
+            print("Gotten queue element")
             self.dataList.append(self.queue.get())
             if len(self.dataList) >= params["dataListMaxLength"]: 
                 self.dataList.pop(0)
+            print("Creating labels")
             dataUpdateDetailedValues = "\n".join(
                 f"{key}: {self.dataList[-1][key]['value']:.2f} {self.dataList[-1][key]['unit']}"
                 for key in self.dataList[-1] if key != "thermocouple no."
@@ -710,11 +700,11 @@ class programLoop(Gtk.Window):
                 f"{self.dataList[-1][key]['unit']}"
                 for key in keys
             )
-            
+            print("Labels made, updating")
             self.dataCollection4DetailedLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedValues)}</span>")
             self.dataCollection4DetailedTemperatureLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedTemps)}</span>")
             self.dataCollection4SimpleLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateSimple)}</span>")
-
+            print("Updated")
         return True
 
     def endTest(self, *args):
