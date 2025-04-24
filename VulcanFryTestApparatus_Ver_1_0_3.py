@@ -131,6 +131,7 @@ def readTemperature(endDataCollect, sensors):
                         params["sensors"]["temperature"]["thermocouple no."][i].value = round((sensors[i].temperature * (9/5)) + 32, params["significantFigures"])
                     else:
                         params["sensors"]["temperature"]["thermocouple no."][i].value = sensors[i].temperature
+                sleep(0.125)
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
                params["sensors"]["temperature"]["tempAvg"].value = round(
@@ -140,7 +141,7 @@ def readTemperature(endDataCollect, sensors):
                     ]),
                     params["significantFigures"]
                 )
-            sleep(params["DataCollectionFrequency"])
+            sleep(0.125)
     except:
         while not endDataCollect.is_set():
             for i in range(params["thermoNum"]):
