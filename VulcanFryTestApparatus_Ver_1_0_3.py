@@ -554,33 +554,35 @@ class programLoop(Gtk.Window):
             except:
                 print("DS3502 is not connected")
             """
-            try:
-                gpio_sclk = params["MAX31855Pinout"][0]   # GPIO11
-                gpio_miso = params["MAX31855Pinout"][2]   # GPIO9
-                cs_gpios  = params["MAX31855Pinout"][1] + params["MAX31855Pinout"][3:]
-                gpio_to_board = {
-                    8: board.CE0,
-                    9: board.MISO,
-                    11: board.SCK,
-                    17: board.GPIO17,
-                    18: board.GPIO18,
-                    22: board.GPIO22,
-                    23: board.GPIO23,
-                    24: board.GPIO24,
-                    27: board.GPIO27,
-                }
-                sclk = gpio_to_board[gpio_sclk]
-                miso = gpio_to_board[gpio_miso]
-                cs_pins = [gpio_to_board[gpio] for gpio in cs_gpios]
-                self.sensors = []
-                for cs_pin in cs_pins:
-                    cs = digitalio.DigitalInOut(cs_pin)
-                    sensor = adafruit_max31855.MAX31855(sclk, cs, miso)
-                    self.sensors.append(sensor)
-                print("MAX31855 is connected")
+            
+            gpio_sclk = params["MAX31855Pinout"][0]   # GPIO11
+            gpio_miso = params["MAX31855Pinout"][2]   # GPIO9
+            cs_gpios  = params["MAX31855Pinout"][1] + params["MAX31855Pinout"][3:]
+            gpio_to_board = {
+                8: board.CE0,
+                9: board.MISO,
+                11: board.SCK,
+                17: board.GPIO17,
+                18: board.GPIO18,
+                22: board.GPIO22,
+                23: board.GPIO23,
+                24: board.GPIO24,
+                27: board.GPIO27,
+            }
+            sclk = gpio_to_board[gpio_sclk]
+            miso = gpio_to_board[gpio_miso]
+            cs_pins = [gpio_to_board[gpio] for gpio in cs_gpios]
+            self.sensors = []
+            for cs_pin in cs_pins:
+                cs = digitalio.DigitalInOut(cs_pin)
+                sensor = adafruit_max31855.MAX31855(sclk, cs, miso)
+                self.sensors.append(sensor)
+            print("MAX31855 is connected")
+            """
             except:
                 self.Temperature = -1
                 print("MAX31855 is not connected")
+            """
 
             self.stack.set_visible_child_name("waitToBegin2")
             self.waitToBegin2label.set_markup(self.textUserDataCheckMarkup)
