@@ -575,6 +575,9 @@ class programLoop(Gtk.Window):
             self.sensors = []
             for cs_pin in cs_pins:
                 cs = digitalio.DigitalInOut(cs_pin)
+                print(sclk)
+                print(cs)
+                print(miso)
                 sensor = adafruit_max31855.MAX31855(sclk, cs, miso)
                 self.sensors.append(sensor)
             print("MAX31855 is connected")
