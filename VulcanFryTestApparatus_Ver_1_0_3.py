@@ -140,6 +140,7 @@ def readTemperature(endDataCollect, sensors):
                     ]),
                     params["significantFigures"]
                 )
+            sleep(params["DataCollectionFrequency"])
     except:
         while not endDataCollect.is_set():
             for i in range(params["thermoNum"]):
