@@ -578,7 +578,7 @@ class programLoop(Gtk.Window):
                 print(sclk)
                 print(cs)
                 print(miso)
-                sensor = adafruit_max31855.MAX31855(sclk, cs, miso)
+                sensor = adafruit_max31855.MAX31855(clk=sclk, cs=cs, do=miso)
                 self.sensors.append(sensor)
             print("MAX31855 is connected")
             """
