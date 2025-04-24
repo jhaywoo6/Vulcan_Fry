@@ -219,17 +219,19 @@ def getData(queue, endDataCollect):
         "gasTotalUsage": {"value": 0, "unit": "cu ft"},
         "BTU": {"value": 0, "unit": "BTU"}
     }
-
+    print("Datalist made")
 
     while not endDataCollect.is_set():
         startTime = time.time()
+        print("Time started")
         with params['sensors']['power'].get_lock():
             data["wattage"]["value"] = params['sensors']['power'].value
-
+        print("wattage Gotten")
         if len(data["thermocouple no."]["value"]) < 8:
             data["thermocouple no."]["value"].extend(["Unused"] * (8 - len(data["thermocouple no."]["value"])))
-
+        print("Thermolist extended")
         with ExitStack() as stack:
+            print("Getting Locks")
             stack.enter_context(params["sensors"]["gas"]["tally"].get_lock())
             stack.enter_context(params["sensors"]["gas"]["flowRate"].get_lock())
             stack.enter_context(params["sensors"]["water"]["tally"].get_lock())
@@ -238,9 +240,11 @@ def getData(queue, endDataCollect):
             stack.enter_context(params["sensors"]["water"]["totalTally"].get_lock())
             stack.enter_context(params["clocks"]["currentTestTime"].get_lock())
             stack.enter_context(params["clocks"]["totalTime"].get_lock())
+            print("locks gotten")
 
             for tc in params["sensors"]["temperature"]["thermocouple no."]:
                 stack.enter_context(tc.get_lock())
+            print("temperature locks gotten")
 
             data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
             data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
@@ -254,6 +258,7 @@ def getData(queue, endDataCollect):
             data["BTU"]["value"] = round(data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * params["oilDensity"], params["significantFigures"])
             # BTU = Water Flow Rate * (Water out - Water in) * oilDensity
             # BTU = Mass * Temperature Change * Specific Heat
+            print("Data gotten")
 
         queue.put(data)
         elapsedTime = time.time() - startTime
@@ -632,7 +637,6 @@ class programLoop(Gtk.Window):
         GLib.timeout_add(200, check_conditions)
 
     def startDataCollection(self, *args):
-        print("Skipping")
         with params["sensors"]["gas"]["tally"].get_lock(), params["sensors"]["water"]["tally"].get_lock():
             params["sensors"]["gas"]["tally"].value = 0.00
             params["sensors"]["water"]["tally"].value = 0.00
@@ -676,13 +680,10 @@ class programLoop(Gtk.Window):
         self.stack.set_visible_child_name("dataCollection4Simple")
 
     def checkQueue(self):
-        print("Check Queue start")
         while not self.queue.empty():
-            print("Gotten queue element")
             self.dataList.append(self.queue.get())
             if len(self.dataList) >= params["dataListMaxLength"]: 
                 self.dataList.pop(0)
-            print("Creating labels")
             dataUpdateDetailedValues = "\n".join(
                 f"{key}: {self.dataList[-1][key]['value']:.2f} {self.dataList[-1][key]['unit']}"
                 for key in self.dataList[-1] if key != "thermocouple no."
@@ -700,11 +701,9 @@ class programLoop(Gtk.Window):
                 f"{self.dataList[-1][key]['unit']}"
                 for key in keys
             )
-            print("Labels made, updating")
             self.dataCollection4DetailedLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedValues)}</span>")
             self.dataCollection4DetailedTemperatureLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateDetailedTemps)}</span>")
             self.dataCollection4SimpleLabel.set_markup(f"<span size='x-large'>{GLib.markup_escape_text(dataUpdateSimple)}</span>")
-            print("Updated")
         return True
 
     def endTest(self, *args):
