@@ -126,11 +126,14 @@ def readTemperature(endDataCollect, sensors):
     try:
         while not endDataCollect.is_set():
             for i in range(params["thermoNum"]):
+                print("Reading thermocouple no.", i)
+                readTemperature = sensors[i].temperature
+                print("Thermocouple no.", i, "read", readTemperature)
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                     if params["returnFarenheit"]:
-                        params["sensors"]["temperature"]["thermocouple no."][i].value = round((sensors[i].temperature * (9/5)) + 32, params["significantFigures"])
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = round((readTemperature * (9/5)) + 32, params["significantFigures"])
                     else:
-                        params["sensors"]["temperature"]["thermocouple no."][i].value = sensors[i].temperature
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = readTemperature
                 sleep(0.125)
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
