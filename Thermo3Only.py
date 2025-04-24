@@ -125,21 +125,14 @@ def readTemperature(endDataCollect, sensors):
     print("List Extended")
     try:
         while not endDataCollect.is_set():
-            print("Loop start")
             for i in range(params["thermoNum"]):
-                print("Itterating through thermoNum")
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
-                    print("Lock Gotten")
                     if params["returnFarenheit"]:
-                        print(i)
                         if i == 3:
-                            print("Reading Max31855 No.3")
                             params["sensors"]["temperature"]["thermocouple no."][i].value = round((sensors[i].temperature * (9/5)) + 32, params["significantFigures"])
                         else:
-                            print("Defaulting to -1")
                             params["sensors"]["temperature"]["thermocouple no."][i].value = -1
                     else:
-                        print("Returning C")
                         params["sensors"]["temperature"]["thermocouple no."][i].value = sensors[i].temperature
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
@@ -565,8 +558,6 @@ class programLoop(Gtk.Window):
                 print("DS3502 is not connected")
             """
             
-            gpio_sclk = params["MAX31855Pinout"][0]   # GPIO11
-            gpio_miso = params["MAX31855Pinout"][2]   # GPIO9
             cs_gpios  = (params["MAX31855Pinout"][1],) + params["MAX31855Pinout"][3:]
             gpio_to_board = {
                 8: board.CE0,
@@ -609,24 +600,28 @@ class programLoop(Gtk.Window):
         
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
+        print("Starting tests")
         if self.testUnderWay == False:
             self.endDataCollect.clear()
             self.temperatureProcess = multiprocessing.Process(
                 target=readTemperature, args=(self.endDataCollect, self.sensors), daemon=True
             )
             self.temperatureProcess.start()
-
+        print("Temp Process started")
         self.endTestEvent.clear()
         try:
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, self.ds3502, params["DS3502"]), daemon=True
             )
+            print("Ctrl Process with DS3502")
         except:
             self.ControlProcess = multiprocessing.Process(
                 target=flowControl, args=(self.TargetTemperature, self.endTestEvent, -1, params["DS3502"]), daemon=True
             )
+            print("Ctrl process without DS3502")
         
         self.ControlProcess.start()
+        print("ctrl process started")
         self.windUpTimeStart = time.time()
         
         def check_conditions():
