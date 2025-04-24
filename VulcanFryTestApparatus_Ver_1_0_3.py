@@ -150,6 +150,7 @@ def readTemperature(endDataCollect, sensors):
             for i in range(params["thermoNum"]):
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                     params["sensors"]["temperature"]["thermocouple no."][i].value = -1
+                    sleep(0.125)
 
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
                 params["sensors"]["temperature"]["tempAvg"].value = round(
@@ -159,6 +160,7 @@ def readTemperature(endDataCollect, sensors):
                     ]),
                     params["significantFigures"]
                 )
+            sleep(0.125)
 
 def flowControl(target, endTestEvent, ds3502, DS3502Params):
     print("Flow Ctrl start")
