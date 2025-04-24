@@ -123,8 +123,9 @@ def readTemperature(endDataCollect, sensors):
     if len(params["sensors"]["temperature"]["thermocouple no."]) < 8:
             params["sensors"]["temperature"]["thermocouple no."].extend(["Unused"] * (8 - len(params["sensors"]["temperature"]["thermocouple no."])))
 
-    try:
-        while not endDataCollect.is_set():
+        
+    while not endDataCollect.is_set():
+        try:
             for i in range(params["thermoNum"]):
                 print("Reading thermocouple no.", i)
                 readTemperature = sensors[i].temperature
@@ -145,8 +146,7 @@ def readTemperature(endDataCollect, sensors):
                     params["significantFigures"]
                 )
             sleep(0.125)
-    except:
-        while not endDataCollect.is_set():
+        except:
             for i in range(params["thermoNum"]):
                 with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                     params["sensors"]["temperature"]["thermocouple no."][i].value = -1
