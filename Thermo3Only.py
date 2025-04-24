@@ -223,15 +223,11 @@ def getData(queue, endDataCollect):
 
     while not endDataCollect.is_set():
         startTime = time.time()
-        print("Time started")
         with params['sensors']['power'].get_lock():
             data["wattage"]["value"] = params['sensors']['power'].value
-        print("wattage Gotten")
         if len(data["thermocouple no."]["value"]) < 8:
             data["thermocouple no."]["value"].extend(["Unused"] * (8 - len(data["thermocouple no."]["value"])))
-        print("Thermolist extended")
         with ExitStack() as stack:
-            print("Getting Locks")
             stack.enter_context(params["sensors"]["gas"]["tally"].get_lock())
             stack.enter_context(params["sensors"]["gas"]["flowRate"].get_lock())
             stack.enter_context(params["sensors"]["water"]["tally"].get_lock())
@@ -240,25 +236,32 @@ def getData(queue, endDataCollect):
             stack.enter_context(params["sensors"]["water"]["totalTally"].get_lock())
             stack.enter_context(params["clocks"]["currentTestTime"].get_lock())
             stack.enter_context(params["clocks"]["totalTime"].get_lock())
-            print("locks gotten")
 
             for tc in params["sensors"]["temperature"]["thermocouple no."]:
                 stack.enter_context(tc.get_lock())
-            print("temperature locks gotten")
 
             data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
+            print("gasUsage gotten")
             data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
+            print("waterUsage gotten")
             data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
+            print("gasFlow gotten")
             data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])*60
+            print("waterFlow gotten")
             data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
+            print("gasTotalUsage gotten")
             data["currentTestTime"]["value"] = params["clocks"]["currentTestTime"].value
+            print("currentTestTime gotten")
             data["totalTime"]["value"] = params["clocks"]["totalTime"].value
+            print("totalTime gotten")
             data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
+            print("thermocouple no. gotten")
             data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
+            print("tempAvg gotten")
             data["BTU"]["value"] = round(data["waterFlow"]["value"] * (data["thermocouple no."]["value"][0] - data["thermocouple no."]["value"][1]) * params["oilDensity"], params["significantFigures"])
+            print("BTU gotten")
             # BTU = Water Flow Rate * (Water out - Water in) * oilDensity
             # BTU = Mass * Temperature Change * Specific Heat
-            print("Data gotten")
 
         queue.put(data)
         elapsedTime = time.time() - startTime
