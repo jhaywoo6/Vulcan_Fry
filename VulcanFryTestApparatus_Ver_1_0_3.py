@@ -28,6 +28,8 @@ from gi.repository import Gtk, GLib, Gdk
 thermoNum = 7
 
 params = {
+    #                      2     3    M   M  4    M   1
+    #                      X     Y    Y   Y  N    Y   N
     "MAX31855Pinout": (11, 8, 9, 17, 27, 22, 18, 23, 24),
     "ADS1115": {
         "ADSAddress": 0x48,
@@ -553,13 +555,13 @@ class programLoop(Gtk.Window):
             """
             
             cs_gpios  = (params["MAX31855Pinout"][1],) + params["MAX31855Pinout"][3:]
-            gpio_to_board = {
-                8: board.CE0,
+            gpio_to_board = { # 17 27 22 18
+                8: board.D22,
                 17: board.D17,
                 18: board.D18,
-                22: board.D22,
-                23: board.D23,
-                24: board.D24,
+                22: board.CE0,
+                23: board.D24,
+                24: board.D23,
                 27: board.D27,
             }
             cs_pins = [gpio_to_board[gpio] for gpio in cs_gpios]
