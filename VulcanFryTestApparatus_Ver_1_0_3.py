@@ -551,13 +551,9 @@ class programLoop(Gtk.Window):
                 print("DS3502 is not connected")
             """
             
-            gpio_sclk = params["MAX31855Pinout"][0]   # GPIO11
-            gpio_miso = params["MAX31855Pinout"][2]   # GPIO9
             cs_gpios  = (params["MAX31855Pinout"][1],) + params["MAX31855Pinout"][3:]
             gpio_to_board = {
                 8: board.CE0,
-                9: board.MISO,
-                11: board.SCK,
                 17: board.D17,
                 18: board.D18,
                 22: board.D22,
@@ -569,6 +565,7 @@ class programLoop(Gtk.Window):
             spi = board.SPI()
             self.sensors = []
             for cs_pin in cs_pins:
+                print("Connecting to MAX31855 on pin", cs_pin)
                 cs = digitalio.DigitalInOut(cs_pin)
                 sensor = adafruit_max31855.MAX31855(spi, cs)
                 self.sensors.append(sensor)
