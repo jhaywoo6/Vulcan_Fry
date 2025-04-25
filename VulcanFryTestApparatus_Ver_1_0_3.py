@@ -57,7 +57,7 @@ params = {
     "sensors": {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in cu ft / sec
         "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in Gal/Sec. Multiplied by 60 to get Gal/Min.
-        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Water Out", 1: "Water In", 2: "HX In", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer HX In", 6: "Fryer Actual", 7: "Spare 1"}},
+        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "HX In", 1: "Water In", 2: "Water Out", 3: "HX Out", 4: "Fryer HX Out", 5: "Fryer Actual", 6: "Fryer HX In", 7: "Spare 1"}},
         "power" : Value('d', 0.00),
         "BTU": Value('d', 0.00)
     },
@@ -556,12 +556,12 @@ class programLoop(Gtk.Window):
             
             cs_gpios  = (params["MAX31855Pinout"][1],) + params["MAX31855Pinout"][3:]
             gpio_to_board = { # 17 27 22 18
-                8: board.D22,
+                8: board.CE0,
                 17: board.D17,
                 18: board.D18,
-                22: board.CE0,
-                23: board.D24,
-                24: board.D23,
+                22: board.D22,
+                23: board.D23,
+                24: board.D24,
                 27: board.D27,
             }
             cs_pins = [gpio_to_board[gpio] for gpio in cs_gpios]
