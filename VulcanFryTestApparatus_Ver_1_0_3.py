@@ -126,20 +126,22 @@ def readTemperature(endDataCollect, sensors):
         
     while not endDataCollect.is_set():
             for i in range(params["thermoNum"]):
-                try:
-                    print("Reading thermocouple no.", i)
-                    readTemperature = sensors[i].temperature
-                    print("Thermocouple no.", i, "read", readTemperature)
-                    with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
-                        if params["returnFarenheit"]:
-                            params["sensors"]["temperature"]["thermocouple no."][i].value = round((readTemperature * (9/5)) + 32, params["significantFigures"])
-                        else:
-                            params["sensors"]["temperature"]["thermocouple no."][i].value = readTemperature
-                    sleep(0.125)
+                # try:
+                print("Reading thermocouple no.", i)
+                readTemperature = sensors[i].temperature
+                print("Thermocouple no.", i, "read", readTemperature)
+                with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
+                    if params["returnFarenheit"]:
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = round((readTemperature * (9/5)) + 32, params["significantFigures"])
+                    else:
+                        params["sensors"]["temperature"]["thermocouple no."][i].value = readTemperature
+                sleep(0.125)
+                """
                 except:
                     with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                         params["sensors"]["temperature"]["thermocouple no."][i].value = -1
                     sleep(0.125)
+                """
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
                params["sensors"]["temperature"]["tempAvg"].value = round(
                     np.mean([
