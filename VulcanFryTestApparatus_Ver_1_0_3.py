@@ -563,9 +563,9 @@ class programLoop(Gtk.Window):
             }
             cs_pins = [gpio_to_board[gpio] for gpio in cs_gpios]
             spi = board.SPI()
+            print(spi)
             self.sensors = []
             for cs_pin in cs_pins:
-                print("Connecting to MAX31855 on pin", cs_pin)
                 cs = digitalio.DigitalInOut(cs_pin)
                 sensor = adafruit_max31855.MAX31855(spi, cs)
                 self.sensors.append(sensor)
