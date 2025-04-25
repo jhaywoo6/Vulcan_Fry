@@ -20,6 +20,7 @@ import numpy as np
 from contextlib import ExitStack
 import RPi.GPIO as GPIO
 from time import sleep
+readTemperature = sensors[i].temperature
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gdk
@@ -136,8 +137,8 @@ def readTemperature(endDataCollect, sensors):
                         else:
                             params["sensors"]["temperature"]["thermocouple no."][i].value = readTemperature
                     sleep(0.125)
-                except:
-                    print("Error with thermocouple no.", i)
+                except Exception as e:
+                    print(f"Error with thermocouple no. {i}: {e}")
                     with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                         params["sensors"]["temperature"]["thermocouple no."][i].value = -1
                     sleep(0.125)
