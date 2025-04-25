@@ -20,7 +20,7 @@ import numpy as np
 from contextlib import ExitStack
 import RPi.GPIO as GPIO
 from time import sleep
-readTemperature = sensors[i].temperature
+import traceback
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gdk
