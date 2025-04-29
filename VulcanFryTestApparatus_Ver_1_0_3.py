@@ -30,7 +30,7 @@ thermoNum = 7
 params = {
     #                      2     3    M   M  4    M   1
     #                      X     Y    Y   Y  N    Y   N
-    "MAX31855Pinout": (11, 25, 9, 17, 27, 22, 18, 23, 24),
+    "MAX31855Pinout": (11, 21, 9, 17, 27, 22, 18, 23, 24),
     "ADS1115": {
         "ADSAddress": 0x48,
         "ADSGain": 1,
@@ -556,7 +556,7 @@ class programLoop(Gtk.Window):
             
             cs_gpios  = (params["MAX31855Pinout"][1],) + params["MAX31855Pinout"][3:]
             gpio_to_board = { # 17 27 22 18
-                25: board.D25,
+                21: board.D21,
                 17: board.D17,
                 18: board.D18,
                 22: board.D22,
