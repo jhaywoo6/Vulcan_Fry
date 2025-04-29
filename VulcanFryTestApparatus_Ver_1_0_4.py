@@ -264,6 +264,8 @@ def pulseCounter(sensorName, endDataCollect):
 
     while not endDataCollect.is_set():
         current_state = GPIO.input(sensor["pin"])
+        if params["sensors"][sensorName] == params["sensors"]["gas"]:
+            print(current_state, last_state)
 
         if current_state == GPIO.HIGH and last_state == GPIO.LOW:
             edge_count += 1
