@@ -56,9 +56,8 @@ params = {
     },
     "sensors": {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in cu ft / sec
-        "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in Gal/Sec. Multiplied by 60 to get Gal/Min.
-                                                                                                                                         
-        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Fryer HX In", 1: "Water In", 2: "HX in", 3: "Fryer Actuall", 4: "Fryer HX Out", 5: "Water Out", 6: "HX Out", 7: "Spare 1"}},
+        "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in Gal/Sec. Multiplied by 60 to get Gal/Min.                                                                                                                            
+        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Fryer HX In", 1: "Water In", 2: "HX in", 3: "Fryer Actuall", 4: "Fryer HX Out", 5: "Water Out", 6: "HX Out", 7: "Spare 1"}, "ignoreForTempAvg": {0, 1, 3, 4, 5}},
         "power" : Value('d', 0.00),
         "BTU": Value('d', 0.00)
     },
@@ -146,7 +145,7 @@ def readTemperature(endDataCollect, sensors):
                 params["sensors"]["temperature"]["tempAvg"].value = round(
                     np.mean([
                         params["sensors"]["temperature"]["thermocouple no."][i].value
-                        for i in range(params["thermoNum"]) if i not in {0, 1, 3, 4, 5}
+                        for i in range(params["thermoNum"]) if i not in params["sensors"]["temperature"]["ignoreForTempAvg"]
                     ]),
                     params["significantFigures"]
                 )
