@@ -47,7 +47,7 @@ params = {
         "valveAdjustmentFrequency": 1,
         "margin": 0.05 # The allowed variance in temperature by percentage once target is reached before the valve attempts to correct to target again.
     },
-    "TargetTemperatureOptions": { # The target average temperature to reach. The flow control valve will read Fryer Actual and then open the valve until temperature is reached.
+    "TargetTemperatureOptions": { # The target fryer actuall temp to reach. The flow control valve will read Fryer Actual and then adjust the valve until temperature is reached.
         "Option A": 310,
         "Option B": 320,
         "Option C": 330,
