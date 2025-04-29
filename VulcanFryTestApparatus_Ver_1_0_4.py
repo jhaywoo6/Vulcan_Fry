@@ -611,6 +611,7 @@ class programLoop(Gtk.Window):
     def coolDrum(self, *args):
         self.stack.set_visible_child_name("coolDrum10")
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
+        self.ds3502.wiper = 127
         self.coolDrum10Label.set_markup(self.coolDrum10Label)
 
     def showPopover(self, widget, event):
@@ -823,6 +824,7 @@ class programLoop(Gtk.Window):
         self.totalTimeProcess.join()
         self.powerProcess.join()
         self.stack.set_visible_child_name("nameFile1")
+        self.ds3502.wiper = params["DS3502"]["setValveDefault"]
         return False
 
     def on_destroy(self, *args):
