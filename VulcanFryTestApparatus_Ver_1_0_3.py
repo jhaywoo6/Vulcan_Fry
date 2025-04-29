@@ -58,7 +58,7 @@ params = {
         "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in cu ft / sec
         "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in Gal/Sec. Multiplied by 60 to get Gal/Min.
                                                                                                                                          
-        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "HX In", 1: "Water In", 2: "Fryer HX In", 3: "Fryer Actuall", 4: "Fryer HX Out", 5: "Water Out", 6: "HX Out", 7: "Spare 1"}},
+        "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Fryer HX In", 1: "Water In", 2: "HX in", 3: "Fryer Actuall", 4: "Fryer HX Out", 5: "Water Out", 6: "HX Out", 7: "Spare 1"}},
         "power" : Value('d', 0.00),
         "BTU": Value('d', 0.00)
     },
@@ -131,9 +131,7 @@ def readTemperature(endDataCollect, sensors):
     while not endDataCollect.is_set():
             for i in range(params["thermoNum"]):
                 try:
-                    print("Reading thermocouple no.", i)
                     readTemperature = sensors[i].temperature
-                    print("Thermocouple no.", i, "read", readTemperature)
                     with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                         if params["returnFarenheit"]:
                             params["sensors"]["temperature"]["thermocouple no."][i].value = round((readTemperature * (9/5)) + 32, params["significantFigures"])
@@ -141,7 +139,6 @@ def readTemperature(endDataCollect, sensors):
                             params["sensors"]["temperature"]["thermocouple no."][i].value = readTemperature
                     sleep(0.125)
                 except Exception as e:
-                    print(f"Error with thermocouple no. {i}: {e}")
                     with params["sensors"]["temperature"]["thermocouple no."][i].get_lock():
                         params["sensors"]["temperature"]["thermocouple no."][i].value = -1
                     sleep(0.125)
@@ -168,13 +165,19 @@ def flowControl(target, endTestEvent, ds3502, DS3502Params):
 
     errorMargin = target * DS3502Params["margin"]
     targetReached = False
+    print("Winding up...")
     sleep(params["windUpTime"]/1000)
+    print("Wound up")
 
     while not endTestEvent.is_set():
         with params["sensors"]["temperature"]["thermocouple no."][5].get_lock():
             tempAvg = params["sensors"]["temperature"]["thermocouple no."][5].value
+            print("Target Reached: ")
+            print(targetReached)
+            print((abs(target - tempAvg) > errorMargin))
         if abs(target - tempAvg) > errorMargin or targetReached == False:
             setValve = max(12, min(127, setValve + (-1 if target > tempAvg else 1)))
+            print(setValve)
             if targetReached == True:
                  targetReached = False
             if abs(target - tempAvg) < errorMargin:
