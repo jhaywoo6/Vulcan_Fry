@@ -152,31 +152,22 @@ def readTemperature(endDataCollect, sensors):
             sleep(0.125)
 
 def flowControl(target, endTestEvent, ds3502, DS3502Params):
-    print("Flow Ctrl start")
     setValve = 50  # 50< Closed, 127 Open
 
     try:
         ds3502.wiper = setValve
-        print("Valve set to 0, should be Opening")
     except:
-        print("Wiper Failure")
         None
 
     errorMargin = target * DS3502Params["margin"]
     targetReached = False
-    print("Winding up...")
     sleep(params["windUpTime"]/1000)
-    print("Wound up")
 
     while not endTestEvent.is_set():
         with params["sensors"]["temperature"]["thermocouple no."][3].get_lock():
             tempAvg = params["sensors"]["temperature"]["thermocouple no."][3].value
-            print("Target Reached: ")
-            print(targetReached)
-            print((abs(target - tempAvg) > errorMargin))
         if abs(target - tempAvg) > errorMargin or targetReached == False:
             setValve = max(66, min(127, setValve + (-1 if target > tempAvg else 1)))
-            print(setValve)
             if targetReached == True:
                  targetReached = False
             if abs(target - tempAvg) < errorMargin:
@@ -276,6 +267,8 @@ def pulseCounter(sensorName, endDataCollect):
 
         if current_state == GPIO.HIGH and last_state == GPIO.LOW:
             edge_count += 1
+            if params["sensors"][sensorName] == params["sensors"]["gas"]:
+                print("edge_count: ", edge_count)
 
         if time.time() >= timeTracker + params["DataCollectionFrequency"]:
             instantaneous_flow = edge_count / sensor["pulses_per_unit"]
@@ -284,6 +277,11 @@ def pulseCounter(sensorName, endDataCollect):
                 sensor["tally"].value += instantaneous_flow
                 sensor["totalTally"].value += instantaneous_flow
                 sensor["flowRate"].value = instantaneous_flow / params["DataCollectionFrequency"]   
+
+            if params["sensors"][sensorName] == params["sensors"]["gas"]:
+                print(f"Gas Flow Rate: {sensor['flowRate'].value} cu ft / hr")
+                print(f"Gas Usage: {sensor['tally'].value} cu ft")
+                print(f"Gas Total Usage: {sensor['totalTally'].value} cu ft")
 
             timeTracker = time.time()
             edge_count = 0
