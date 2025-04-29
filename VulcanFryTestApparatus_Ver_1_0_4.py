@@ -267,9 +267,6 @@ def pulseCounter(sensorName, endDataCollect):
 
         if current_state == GPIO.HIGH and last_state == GPIO.LOW:
             edge_count += 1
-            
-        if params["sensors"][sensorName] == params["sensors"]["gas"]:
-                print("edge_count: ", edge_count)
 
         if time.time() >= timeTracker + params["DataCollectionFrequency"]:
             instantaneous_flow = edge_count / sensor["pulses_per_unit"]
@@ -283,6 +280,7 @@ def pulseCounter(sensorName, endDataCollect):
                 print(f"Gas Flow Rate: {sensor['flowRate'].value} cu ft / hr")
                 print(f"Gas Usage: {sensor['tally'].value} cu ft")
                 print(f"Gas Total Usage: {sensor['totalTally'].value} cu ft")
+                print("edge_count: ", edge_count)
 
             timeTracker = time.time()
             edge_count = 0
