@@ -380,7 +380,7 @@ class programLoop(Gtk.Window):
         self.nameFile1NextButton.connect("clicked", self.saveFileName)
 
         self.nameFile1CoolDrum = Gtk.Button(label="Cool Drum")
-        self.nameFile1NextButton.connect("clicked", self.coolDrum)
+        self.nameFile1CoolDrum.connect("clicked", self.coolDrum)
 
         self.nameFile1.pack_start(self.nameFile1Entry, False, False, 10)
         self.nameFile1.pack_start(self.nameFile1TargetTemperature, False, False, 10)
