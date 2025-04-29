@@ -334,7 +334,7 @@ class programLoop(Gtk.Window):
 
         self.coolDrum10Label = "Cooling the drum. Click to continue."
 
-        self.textNameFile1LabelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_nameFile1label)}</span>"
+        self.textNameFile1LabelMarkup = f"<span size='large'>{GLib.markup_escape_text(self.text_nameFile1label)}</span>"
         self.textUserDataCheckMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.text_userDataCheck)}</span>"
         self.textwaitForTempTarget3labelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textwaitForTempTarget3label)}</span>"
         self.textMotorWindDown5LabelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textMotorWindDown5Label)}</span>"
