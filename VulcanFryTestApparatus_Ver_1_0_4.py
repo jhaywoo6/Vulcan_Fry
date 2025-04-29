@@ -244,7 +244,7 @@ def getData(queue, endDataCollect):
 
             data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
             data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
-            data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])*60*60
+            data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])*3600
             data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])*60
             data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
             data["currentTestTime"]["value"] = params["clocks"]["currentTestTime"].value
