@@ -620,7 +620,6 @@ class programLoop(Gtk.Window):
         self.stack.set_visible_child_name("coolDrum10")
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         self.ds3502.wiper = 127
-        self.coolDrum10Label.set_markup(self.coolDrum10Label)
 
     def showPopover(self, widget, event):
         self.nameFile1TargetTemperaturePopover.popup()
@@ -824,13 +823,16 @@ class programLoop(Gtk.Window):
         GPIO.output(params["motor"]["pin2"], GPIO.LOW)
         self.endDataCollect.set()
         self.endTestEvent.set()
-        self.temperatureProcess.join()
-        self.ControlProcess.join()
-        self.dataProcess.join()
-        self.GasProcess.join()
-        self.WaterProcess.join()
-        self.totalTimeProcess.join()
-        self.powerProcess.join()
+        try:
+            self.temperatureProcess.join()
+            self.ControlProcess.join()
+            self.dataProcess.join()
+            self.GasProcess.join()
+            self.WaterProcess.join()
+            self.totalTimeProcess.join()
+            self.powerProcess.join()
+        except:
+            None
         self.stack.set_visible_child_name("nameFile1")
         self.ds3502.wiper = params["DS3502"]["setValveDefault"]
         return False
