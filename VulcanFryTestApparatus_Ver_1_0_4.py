@@ -762,10 +762,7 @@ class programLoop(Gtk.Window):
         self.GasProcess.join()
         self.WaterProcess.join()
         self.totalTimeProcess.join()
-        try:
-            self.temperatureProcess.join()
-        except:
-            None
+        self.temperatureProcess.join()
         self.powerProcess.join()
         with params["sensors"]["gas"]["totalTally"].get_lock(), params["sensors"]["water"]["totalTally"].get_lock():
             params["sensors"]["gas"]["totalTally"].value = 0.00
@@ -843,12 +840,21 @@ class programLoop(Gtk.Window):
         GPIO.output(params["motor"]["pin2"], GPIO.LOW)
 
         self.endDataCollect.set()
-        if hasattr(self, "temperatureProcess") and self.temperatureProcess.is_alive():
-            self.temperatureProcess.terminate()
-        if hasattr(self, "dataProcess") and self.dataProcess.is_alive():
-            self.dataProcess.terminate()
-        if hasattr(self, "ControlProcess") and self.ControlProcess.is_alive():
-            self.ControlProcess.terminate()
+        try:
+            if hasattr(self, "temperatureProcess") and self.temperatureProcess.is_alive():
+                self.temperatureProcess.terminate()
+        except:
+            None
+        try:
+            if hasattr(self, "dataProcess") and self.dataProcess.is_alive():
+                self.dataProcess.terminate()
+        except:
+            None
+        try:
+            if hasattr(self, "ControlProcess") and self.ControlProcess.is_alive():
+                self.ControlProcess.terminate()
+        except:
+            None
         GPIO.cleanup()
 
 if __name__ == "__main__":
