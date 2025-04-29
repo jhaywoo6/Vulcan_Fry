@@ -143,10 +143,10 @@ def readTemperature(endDataCollect, sensors):
                         params["sensors"]["temperature"]["thermocouple no."][i].value = -1
                     sleep(0.125)
             with params["sensors"]["temperature"]["tempAvg"].get_lock():
-               params["sensors"]["temperature"]["tempAvg"].value = round(
+                params["sensors"]["temperature"]["tempAvg"].value = round(
                     np.mean([
                         params["sensors"]["temperature"]["thermocouple no."][i].value
-                        for i in range(2, params["thermoNum"])
+                        for i in range(params["thermoNum"]) if i not in {0, 1, 3, 4, 5}
                     ]),
                     params["significantFigures"]
                 )
