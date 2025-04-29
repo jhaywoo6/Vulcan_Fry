@@ -44,7 +44,7 @@ params = {
         "DSAddress": 0x28,
         "TargetTemperatureDefault": 350,
         "setValveDefault": 0,
-        "valveAdjustmentFrequency": 0.05,
+        "valveAdjustmentFrequency": 1,
         "margin": 0.05 # The allowed variance in temperature by percentage once target is reached before the valve attempts to correct to target again.
     },
     "TargetTemperatureOptions": { # The target average temperature to reach. The flow control valve will read Fryer Actual and then open the valve until temperature is reached.
@@ -154,7 +154,7 @@ def readTemperature(endDataCollect, sensors):
 
 def flowControl(target, endTestEvent, ds3502, DS3502Params):
     print("Flow Ctrl start")
-    setValve = 0  # 0 Closed, 127 Open
+    setValve = 50  # 50< Closed, 127 Open
 
     try:
         ds3502.wiper = setValve
@@ -170,13 +170,13 @@ def flowControl(target, endTestEvent, ds3502, DS3502Params):
     print("Wound up")
 
     while not endTestEvent.is_set():
-        with params["sensors"]["temperature"]["thermocouple no."][5].get_lock():
-            tempAvg = params["sensors"]["temperature"]["thermocouple no."][5].value
+        with params["sensors"]["temperature"]["thermocouple no."][3].get_lock():
+            tempAvg = params["sensors"]["temperature"]["thermocouple no."][3].value
             print("Target Reached: ")
             print(targetReached)
             print((abs(target - tempAvg) > errorMargin))
         if abs(target - tempAvg) > errorMargin or targetReached == False:
-            setValve = max(12, min(127, setValve + (-1 if target > tempAvg else 1)))
+            setValve = max(58, min(127, setValve + (-1 if target > tempAvg else 1)))
             print(setValve)
             if targetReached == True:
                  targetReached = False
