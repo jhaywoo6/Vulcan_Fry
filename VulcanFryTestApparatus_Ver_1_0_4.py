@@ -569,15 +569,15 @@ class programLoop(Gtk.Window):
                         return -1
                 self.wattChan = WattChanFallback()
                 print("ADS1115 is not connected")
-            #try:
-            self.I2C = busio.I2C(board.SCL, board.SDA)
-            self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
-            self.ds3502.wiper = params["DS3502"]["setValveDefault"]
-            print("DS3502 is connected")
-            """
+            try:
+                self.I2C = busio.I2C(board.SCL, board.SDA)
+                self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
+                self.ds3502.wiper = params["DS3502"]["setValveDefault"]
+                print("DS3502 is connected")
+            
             except:
                 print("DS3502 is not connected")
-            """
+            
             
             cs_gpios  = (params["MAX31855Pinout"][1],) + params["MAX31855Pinout"][3:]
             gpio_to_board = { # 17 27 22 18
@@ -608,6 +608,14 @@ class programLoop(Gtk.Window):
             self.waitToBegin2label.set_markup(self.textUserDataCheckMarkup)
 
     def coolDrum(self, *args):
+        try:
+            self.I2C = busio.I2C(board.SCL, board.SDA)
+            self.ds3502 = adafruit_ds3502.DS3502(i2c_bus = self.I2C, address = params["DS3502"]["DSAddress"])
+            self.ds3502.wiper = params["DS3502"]["setValveDefault"]
+            print("DS3502 is connected")
+        
+        except:
+            print("DS3502 is not connected")
         self.stack.set_visible_child_name("coolDrum10")
         GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         self.ds3502.wiper = 127
@@ -753,7 +761,10 @@ class programLoop(Gtk.Window):
         self.GasProcess.join()
         self.WaterProcess.join()
         self.totalTimeProcess.join()
-        self.temperatureProcess.join()
+        try:
+            self.temperatureProcess.join()
+        except:
+            None
         self.powerProcess.join()
         with params["sensors"]["gas"]["totalTally"].get_lock(), params["sensors"]["water"]["totalTally"].get_lock():
             params["sensors"]["gas"]["totalTally"].value = 0.00
