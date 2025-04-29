@@ -267,7 +267,8 @@ def pulseCounter(sensorName, endDataCollect):
 
         if current_state == GPIO.HIGH and last_state == GPIO.LOW:
             edge_count += 1
-            if params["sensors"][sensorName] == params["sensors"]["gas"]:
+            
+        if params["sensors"][sensorName] == params["sensors"]["gas"]:
                 print("edge_count: ", edge_count)
 
         if time.time() >= timeTracker + params["DataCollectionFrequency"]:
