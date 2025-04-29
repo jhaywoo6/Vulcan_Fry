@@ -176,7 +176,7 @@ def flowControl(target, endTestEvent, ds3502, DS3502Params):
             print(targetReached)
             print((abs(target - tempAvg) > errorMargin))
         if abs(target - tempAvg) > errorMargin or targetReached == False:
-            setValve = max(58, min(127, setValve + (-1 if target > tempAvg else 1)))
+            setValve = max(66, min(127, setValve + (-1 if target > tempAvg else 1)))
             print(setValve)
             if targetReached == True:
                  targetReached = False
