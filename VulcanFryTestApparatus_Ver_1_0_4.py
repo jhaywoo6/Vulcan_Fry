@@ -340,6 +340,7 @@ class programLoop(Gtk.Window):
         self.textMotorWindDown5LabelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textMotorWindDown5Label)}</span>"
         self.textSavingData8LabelMarkup = f"<span size='x-large'>{GLib.markup_escape_text(self.textSavingData8Label)}</span>"
         self.textDataSave9Label_markup = f"<span size='x-large'>{GLib.markup_escape_text(self.textDataSave9Label)}</span>"
+        self.coolDrum10Label = f"<span size='x-large'>{GLib.markup_escape_text(self.coolDrum10Label)}</span>"
 
         # Screen 1: Naming the file and entering the target flow rate
         self.nameFile1 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.VERTICAL)
