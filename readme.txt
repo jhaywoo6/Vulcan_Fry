@@ -140,7 +140,7 @@ for mor info on how these elements work. (https://python-gtk-3-tutorial.readthed
 The program uses Adafruit for communication with the MAX31855, ADS1115, and DS3502 boards.
 Refer to their respective documentation for how they work.
 Note the Octo MAX31855 has its own library seperate from adafruit. Do not use the adafruit_max31855
-library with this program.
+library with the Octo Board
 MAX31855: (https://github.com/Neem-Tech/Octo-MAX31855-Breakout-Board)
 ADS1115: (https://docs.circuitpython.org/projects/ads1x15/en/latest/)
 DS3502: (https://docs.circuitpython.org/projects/ds3502/en/latest/)
@@ -188,6 +188,7 @@ ctrl-c if stuck on "Looking for font path" or connect pi via SSH to seperate com
 sudo pip install Adafruit-Blinka --break-system-packages
 sudo pip install adafruit-circuitpython-ads1x15 --break-system-packages
 sudo pip install adafruit-circuitpython-ds3502 --break-system-packages
+sudo pip install adafruit-circuitpython-max31855 --break-system-packages
 sudo apt update && sudo apt install xorg gnome gnome-shell --no-install-recommends
 y + enter when prompted
 enter
@@ -195,6 +196,7 @@ Highlight gdm3 and hit enter
 sudo pip install Adafruit-Blinka --break-system-packages
 sudo pip install adafruit-circuitpython-ads1x15 --break-system-packages
 sudo pip install adafruit-circuitpython-ds3502 --break-system-packages
+sudo pip install adafruit-circuitpython-max31855 --break-system-packages
 Restart the pi
 
 Step 3: OS setup
