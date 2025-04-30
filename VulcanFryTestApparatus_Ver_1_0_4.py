@@ -324,7 +324,7 @@ class programLoop(Gtk.Window):
         )
 
         self.text_nameFile1label = (
-            f"Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the fryer HX is dunked into to the fryer being tested and that the water tap is on.\nEnter a file name for saving the test in the first box.\nIf the file already exists, an extension (#) will be added.\nSelect the second box for a list of target temperature options.\nPick the option corresponding to the fryer you wish to test.\nPress Next or Enter to continue."
+            f"Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the fryer HX is dunked into to the fryer being tested and that the water tap is on.\nEnter a file name for saving the test in the first box.\nIf the file already exists, an extension (#) will be added.\nSelect the second box for a list of target temperature options that Fryer Actuall should be maintained at.\nPick the option corresponding to the fryer you wish to test.\nPress Next or Enter to continue. Click Cool Drum to turn on the HX motor and open the water valve."
         )
 
         self.textwaitForTempTarget3label = "The motors should be turning on.\nIf they do not, end the test and contact the VULCAN_FRY team.\nAttempting to reach target temperature..."
