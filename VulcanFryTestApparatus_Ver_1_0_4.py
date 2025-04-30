@@ -78,7 +78,9 @@ params = {
     "significantFigures": 2,
     "returnFarenheit": True,  # Set to True to return Farenheit, False for Celsius
     "windUpTime": 10000, # Time in miliseconds untill temperature target is checked. Idle Oil in apparatus is expected to be cool before a test starts untill hot oil begins flowing from the fryer?
-    "oilDensity": 500.4
+    "oilDensity": 500.4,
+    "demoMode": False, #Expo only. Set to true and pick a test file .csv to run a test with demo data. Set to false to run a real test.
+    "demoPath": "demoData.csv"
 }    
 
 # Adds a number to the end of the file name if it already exists. Test, Test(1), Test(2), ect.
@@ -93,6 +95,15 @@ def duplicateLabeler(filepath):
 
     return filepath
 
+def read_demo_data(file_path):
+    with open(file_path, 'r', newline='') as file:
+        reader = csv.reader(file)
+        header = next(reader)
+        data = [row for row in reader]
+    return header, data
+
+demoHead, demoData = read_demo_data(params["demoPath"])
+
 # Looping functions. These are started by programLoop after selecting self.waitToBegin2button = Gtk.Button(label="Begin Test")
 # The current test ends after selecting self.dataCollection4SimpleEndTestButton = Gtk.Button(label="End Test")
 # A new test starts after selecting self.continueTestingQuerry6NextTest = Gtk.Button(label="Click to begin the next test.")
@@ -101,7 +112,6 @@ def duplicateLabeler(filepath):
 # All other functions run and collect data during and between tests until self.continueTestingQuerry6EndTesting = Gtk.Button(label="Click to end testing.") is pressed.
 
 # The Octo MAX31855 appears to read colder temperatures as hotter than expected, but higher temps can be read accuratly after a long enough period of time. This is a bandaid fix.
-
 
 def readPower(chan, endDataCollect):
     rawVrms = 0.0
@@ -195,7 +205,7 @@ def clockTracker(endDataCollect, clock):
     with params["clocks"][clock].get_lock():
         params["clocks"][clock].value = 0  
 
-def getData(queue, endDataCollect):
+def getData(queue, endDataCollect, demoMode = False):
 
     data = {
         "gasFlow": {"value": 0, "unit": "cu ft / hr"},
@@ -211,6 +221,7 @@ def getData(queue, endDataCollect):
         "BTU": {"value": 0, "unit": "BTU"}
     }
 
+    demoCount = 0
 
     while not endDataCollect.is_set():
         startTime = time.time()
@@ -233,18 +244,33 @@ def getData(queue, endDataCollect):
             for tc in params["sensors"]["temperature"]["thermocouple no."]:
                 stack.enter_context(tc.get_lock())
 
-            data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
-            data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
-            data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
-            data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])
-            data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
-            data["currentTestTime"]["value"] = params["clocks"]["currentTestTime"].value
-            data["totalTime"]["value"] = params["clocks"]["totalTime"].value
-            data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
-            data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
-            data["BTU"]["value"] = round(data["waterFlow"]["value"] * (data["thermocouple no."]["value"][2] - data["thermocouple no."]["value"][1]) * params["oilDensity"], params["significantFigures"])
-            # BTU = Water Flow Rate * (Water out - Water in) * oilDensity
-            # BTU = Mass * Temperature Change * Specific Heat
+            if demoMode:
+                data["gasUsage"]["value"] = demoData[demoCount][5]
+                data["waterFlow"]["value"] = demoData[demoCount][8]
+                data["gasFlow"]["value"] = demoData[demoCount][0]
+                data["gasTotalUsage"]["value"] = demoData[demoCount][7]
+                data["currentTestTime"]["value"] = demoData[demoCount][3]
+                data["totalTime"]["value"] = demoData[demoCount][4]
+                data["thermocouple no."]["value"] = [demoData[demoCount][i] for i in range(10, 10 + params["thermoNum"])]
+                data["tempAvg"]["value"] = demoData[demoCount][1]
+                data["BTU"]["value"] = demoData[demoCount][9]
+                data["waterUsage"]["value"] = demoData[demoCount][6]
+                data["wattage"]["value"] = demoData[demoCount][2]
+                demoCount = (demoCount + 1) % len(demoData)
+
+            else:
+                data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
+                data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
+                data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
+                data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])
+                data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
+                data["currentTestTime"]["value"] = params["clocks"]["currentTestTime"].value
+                data["totalTime"]["value"] = params["clocks"]["totalTime"].value
+                data["thermocouple no."]["value"] = [tc.value for tc in params["sensors"]["temperature"]["thermocouple no."]]
+                data["tempAvg"]["value"] = params["sensors"]["temperature"]["tempAvg"].value
+                data["BTU"]["value"] = round(data["waterFlow"]["value"] * (data["thermocouple no."]["value"][2] - data["thermocouple no."]["value"][1]) * params["oilDensity"], params["significantFigures"])
+                # BTU = Water Flow Rate * (Water out - Water in) * oilDensity
+                # BTU = Mass * Temperature Change * Specific Heat
  
         queue.put(data)
         elapsedTime = time.time() - startTime
@@ -674,7 +700,7 @@ class programLoop(Gtk.Window):
 
         if self.testUnderWay == False:
             self.dataProcess = multiprocessing.Process(
-                target=getData, args=(self.queue, self.endDataCollect), daemon=True
+                target=getData, args=(self.queue, self.endDataCollect, params["demoMode"]), daemon=True
             )
             self.GasProcess = multiprocessing.Process(
                 target=pulseCounter, args=("gas", self.endDataCollect, params["sensors"]["gas"]["timeScale"]), daemon=True
@@ -789,7 +815,7 @@ class programLoop(Gtk.Window):
             "Gas Usage",
             "Water Usage",
             "Gas Total Usage",
-            "Water Total Usage",
+            "Water Flow Rate",
             "BTU"
         ] + [f"{params['sensors']['temperature']['thermocouple name'][i]}" for i in range(params["thermoNum"])]
 
