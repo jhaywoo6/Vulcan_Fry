@@ -80,7 +80,7 @@ params = {
     "windUpTime": 10000, # Time in miliseconds untill temperature target is checked. Idle Oil in apparatus is expected to be cool before a test starts untill hot oil begins flowing from the fryer?
     "oilDensity": 500.4,
     "demoMode": False, #Expo only. Set to true and pick a test file .csv to run a test with demo data. Set to false to run a real test.
-    "demoPath": "demoData.csv"
+    "demoPath": "/home/Vulcan/Test.csv"
 }    
 
 # Adds a number to the end of the file name if it already exists. Test, Test(1), Test(2), ect.
@@ -105,6 +105,7 @@ def read_demo_data(file_path):
 try:
     demoHead, demoData = read_demo_data(params["demoPath"])
 except:
+    print("File not found")
     None
 
 # Looping functions. These are started by programLoop after selecting self.waitToBegin2button = Gtk.Button(label="Begin Test")
@@ -123,7 +124,10 @@ def readPower(chan, endDataCollect):
     while not endDataCollect.is_set():
         for _ in range(samples):
             voltage = chan.voltage
-            rawVrms += voltage ** 2
+            try:
+                rawVrms += voltage ** 2
+            except:
+                rawVrms += 1
     
         vrms = (rawVrms / samples) ** 0.5
         current = (vrms / params['ADS1115']["burdenResistor"]) * params['ADS1115']["SCTRatio"] / params['ADS1115']["currentCorrection"] # Note: currentCorrection is a bandaid fix for adjusting read current to expected value. May need fixed in the future.
@@ -248,17 +252,17 @@ def getData(queue, endDataCollect, demoMode = False):
                 stack.enter_context(tc.get_lock())
 
             if demoMode:
-                data["gasUsage"]["value"] = demoData[demoCount][5]
-                data["waterFlow"]["value"] = demoData[demoCount][8]
-                data["gasFlow"]["value"] = demoData[demoCount][0]
-                data["gasTotalUsage"]["value"] = demoData[demoCount][7]
-                data["currentTestTime"]["value"] = demoData[demoCount][3]
-                data["totalTime"]["value"] = demoData[demoCount][4]
-                data["thermocouple no."]["value"] = [demoData[demoCount][i] for i in range(10, 10 + params["thermoNum"])]
-                data["tempAvg"]["value"] = demoData[demoCount][1]
-                data["BTU"]["value"] = demoData[demoCount][9]
-                data["waterUsage"]["value"] = demoData[demoCount][6]
-                data["wattage"]["value"] = demoData[demoCount][2]
+                data["gasUsage"]["value"] = float(demoData[demoCount][5])
+                data["waterFlow"]["value"] = float(demoData[demoCount][8])
+                data["gasFlow"]["value"] = float(demoData[demoCount][0])
+                data["gasTotalUsage"]["value"] = float(demoData[demoCount][7])
+                data["currentTestTime"]["value"] = float(demoData[demoCount][3])
+                data["totalTime"]["value"] = float(demoData[demoCount][4])
+                data["thermocouple no."]["value"] = [float(demoData[demoCount][i]) for i in range(10, 10 + params["thermoNum"])]
+                data["tempAvg"]["value"] = float(demoData[demoCount][1])
+                data["BTU"]["value"] = float(demoData[demoCount][9])
+                data["waterUsage"]["value"] = float(demoData[demoCount][6])
+                data["wattage"]["value"] = float(demoData[demoCount][2])
                 demoCount = (demoCount + 1) % len(demoData)
 
             else:
@@ -307,12 +311,6 @@ def pulseCounter(sensorName, endDataCollect, timeScale):
                 sensor["tally"].value += instantaneous_flow[-1]
                 sensor["totalTally"].value += instantaneous_flow[-1]
                 sensor["flowRate"].value = sum(instantaneous_flow)
-
-            if params["sensors"][sensorName] == params["sensors"]["gas"]:
-                print(f"Gas Flow Rate: {sensor['flowRate'].value} cu ft / hr")
-                print(f"Gas Usage: {sensor['tally'].value} cu ft")
-                print(f"Gas Total Usage: {sensor['totalTally'].value} cu ft")
-                print("edge_count: ", edge_count)
 
             timeTracker = time.time()
             edge_count = 0
