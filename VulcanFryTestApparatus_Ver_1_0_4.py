@@ -101,6 +101,7 @@ def read_demo_data(file_path):
         header = next(reader)
         data = [row for row in reader]
     return header, data
+
 try:
     demoHead, demoData = read_demo_data(params["demoPath"])
 except:
