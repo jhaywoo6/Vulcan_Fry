@@ -188,7 +188,9 @@ The .img file should load the program .py file by default. It can be found under
 As the onscreen keyboard will close Geany upon hitting the backspace button, making edits difficult.
 Alternatively, copy and paste the latest revision of this program into your code editor of choice. 
 The text of the code can either be pasted directly into Geany, or you can replace the file 
-with one of an identical name with the new modifications. When running the program on Geany, a terminal window will appear alongside the program which displays any errors, warnings, tracebacks, and exceptions the program experiences. Do not close the terminal window during a test. The motor relays will be locked on and the valve will be locked to its last setting. If this is accidentally done, press the e-stop, execute the program again from Geany, or powercycle the pi so that the program can regain control over the motors and valve.
+with one of an identical name with the new modifications. When running the program on Geany, a terminal window will appear alongside the program which displays any errors, warnings, tracebacks, and exceptions the program experiences. Do not close the terminal window during a test. The motor relays will be locked on and the valve will be locked to its last setting. If this is accidentally done, press the e-stop, execute the program again from Geany, or power cycle the pi so that the program can regain control over the motors and valve.
+
+The program uses a dictionary “params” to control various aspects of the program from one place. This is located just under the program imports. Use Ctrl + F to locate what areas they affect. Additional params can be set by adding to the dictionary and replacing the object in the code with params[“key”][“subkeys”]. Modify these as needed. 
 
 The latest functional rev as of writing is VulcanFryTestApparatus Ver. 1.0.4.py
 
