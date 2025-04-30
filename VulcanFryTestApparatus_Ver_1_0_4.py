@@ -55,8 +55,8 @@ params = {
         "Option E": 350
     },
     "sensors": {
-        "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in cu ft / hr
-        "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00)}, # Measured in Gal/min. Multiplied by 60 to get Gal/Min.                                                                                                                            
+        "gas": {"pin": 6, "pulses_per_unit": 1, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00), "timeScale": 3600}, # Measured in cu ft / hr
+        "water": {"pin": 25, "pulses_per_unit": 1588, "tally": Value('d', 0.00), "totalTally": Value('d', 0.00), "flowRate": Value('d', 0.00), "timeScale": 60}, # Measured in Gal/min. Multiplied by 60 to get Gal/Min.                                                                                                                            
         "temperature": {"thermocouple no.": [Value('d', 0.00) for _ in range(thermoNum)], "tempAvg": Value('d', 0.00), "thermocouple name": {0: "Fryer HX In", 1: "Water In", 2: "Water Out", 3: "Fryer Actuall", 4: "Fryer HX Out", 5: "HX In", 6: "HX Out", 7: "Spare 1"}, "ignoreForTempAvg": {0, 1, 3, 4, 5}},
         "power" : Value('d', 0.00),
         "BTU": Value('d', 0.00)
@@ -235,8 +235,8 @@ def getData(queue, endDataCollect):
 
             data["gasUsage"]["value"] = round(params["sensors"]["gas"]["tally"].value, params["significantFigures"])
             data["waterUsage"]["value"] = round(params["sensors"]["water"]["tally"].value, params["significantFigures"])
-            data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])*3600
-            data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])*60
+            data["gasFlow"]["value"] = round(params["sensors"]["gas"]["flowRate"].value, params["significantFigures"])
+            data["waterFlow"]["value"] = round(params["sensors"]["water"]["flowRate"].value, params["significantFigures"])
             data["gasTotalUsage"]["value"] = round(params["sensors"]["gas"]["totalTally"].value, params["significantFigures"])
             data["currentTestTime"]["value"] = params["clocks"]["currentTestTime"].value
             data["totalTime"]["value"] = params["clocks"]["totalTime"].value
@@ -253,7 +253,7 @@ def getData(queue, endDataCollect):
             print(f"DataCollectionFrequency adjusted to {params['DataCollectionFrequency']}. Optimizations needed to reach requested rate.")
         time.sleep(params["DataCollectionFrequency"])
 
-def pulseCounter(sensorName, endDataCollect):
+def pulseCounter(sensorName, endDataCollect, timeScale):
     sensor = params["sensors"][sensorName]
     edge_count = 0
     last_state = GPIO.LOW
@@ -261,6 +261,7 @@ def pulseCounter(sensorName, endDataCollect):
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(sensor["pin"], GPIO.IN)
     timeTracker = time.time()
+    instantaneous_flow = []
 
     while not endDataCollect.is_set():
         current_state = GPIO.input(sensor["pin"])
@@ -269,12 +270,14 @@ def pulseCounter(sensorName, endDataCollect):
             edge_count += 1
 
         if time.time() >= timeTracker + params["DataCollectionFrequency"]:
-            instantaneous_flow = edge_count / sensor["pulses_per_unit"]
+            instantaneous_flow.append(edge_count / sensor["pulses_per_unit"])
+            if len(instantaneous_flow) > timeScale:
+                instantaneous_flow.pop(0)
 
             with sensor["tally"].get_lock(), sensor["totalTally"].get_lock(), sensor["flowRate"].get_lock():
-                sensor["tally"].value += instantaneous_flow
-                sensor["totalTally"].value += instantaneous_flow
-                sensor["flowRate"].value = instantaneous_flow / params["DataCollectionFrequency"]   
+                sensor["tally"].value += instantaneous_flow[-1]
+                sensor["totalTally"].value += instantaneous_flow[-1]
+                sensor["flowRate"].value = sum(instantaneous_flow)
 
             if params["sensors"][sensorName] == params["sensors"]["gas"]:
                 print(f"Gas Flow Rate: {sensor['flowRate'].value} cu ft / hr")
@@ -321,7 +324,7 @@ class programLoop(Gtk.Window):
         )
 
         self.text_nameFile1label = (
-            f"Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the sensors are affixed to the fryer being tested.\nEnter a file name for saving the test in the first box.\nIf the file already exists, an extension (#) will be added.\nSelect the second box for a list of target temperature options.\nPick the option corresponding to the fryer you wish to test.\nPress Next or Enter to continue."
+            f"Welcome to the simulated ASTM F1361 test apparatus.\nPlease read the user manual prior to setting up this test.\nEnsure that the fryer HX is dunked into to the fryer being tested and that the water tap is on.\nEnter a file name for saving the test in the first box.\nIf the file already exists, an extension (#) will be added.\nSelect the second box for a list of target temperature options.\nPick the option corresponding to the fryer you wish to test.\nPress Next or Enter to continue."
         )
 
         self.textwaitForTempTarget3label = "The motors should be turning on.\nIf they do not, end the test and contact the VULCAN_FRY team.\nAttempting to reach target temperature..."
@@ -674,10 +677,10 @@ class programLoop(Gtk.Window):
                 target=getData, args=(self.queue, self.endDataCollect), daemon=True
             )
             self.GasProcess = multiprocessing.Process(
-                target=pulseCounter, args=("gas", self.endDataCollect), daemon=True
+                target=pulseCounter, args=("gas", self.endDataCollect, params["sensors"]["gas"]["timeScale"]), daemon=True
             )
             self.WaterProcess = multiprocessing.Process(
-                target=pulseCounter, args=("water", self.endDataCollect), daemon=True
+                target=pulseCounter, args=("water", self.endDataCollect, params["sensors"]["water"]["timeScale"]), daemon=True
             )
             self.totalTimeProcess = multiprocessing.Process(
                 target=clockTracker, args=(self.endDataCollect, "totalTime"), daemon=True
