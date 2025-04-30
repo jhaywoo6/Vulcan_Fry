@@ -101,8 +101,10 @@ def read_demo_data(file_path):
         header = next(reader)
         data = [row for row in reader]
     return header, data
-
-demoHead, demoData = read_demo_data(params["demoPath"])
+try:
+    demoHead, demoData = read_demo_data(params["demoPath"])
+except:
+    None
 
 # Looping functions. These are started by programLoop after selecting self.waitToBegin2button = Gtk.Button(label="Begin Test")
 # The current test ends after selecting self.dataCollection4SimpleEndTestButton = Gtk.Button(label="End Test")
