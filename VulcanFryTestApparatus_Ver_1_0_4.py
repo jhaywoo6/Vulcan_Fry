@@ -645,7 +645,8 @@ class programLoop(Gtk.Window):
         except:
             print("DS3502 is not connected")
         self.stack.set_visible_child_name("coolDrum10")
-        GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
+        if not params["demoMode"]:
+            GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
         self.ds3502.wiper = 127
 
     def showPopover(self, widget, event):
@@ -658,9 +659,9 @@ class programLoop(Gtk.Window):
 
     def beginTest(self, *args):
         self.stack.set_visible_child_name("waitForTempTarget3")
-        
-        GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
-        GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
+        if not params["demoMode"]:
+            GPIO.output(params["motor"]["pin1"], GPIO.HIGH)
+            GPIO.output(params["motor"]["pin2"], GPIO.HIGH)
         if self.testUnderWay == False:
             self.endDataCollect.clear()
             self.temperatureProcess = multiprocessing.Process(
