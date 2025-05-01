@@ -80,7 +80,7 @@ params = {
     "windUpTime": 10000, # Time in miliseconds untill temperature target is checked. Idle Oil in apparatus is expected to be cool before a test starts untill hot oil begins flowing from the fryer?
     "oilDensity": 500.4,
     "demoMode": False, #Expo only. Set to true and pick a test file .csv to run a test with demo data. Set to false to run a real test.
-    "demoPath": "/home/Vulcan/Test.csv"
+    "demoPath": "/home/Vulcan/expodemo2.csv"
 }    
 
 # Adds a number to the end of the file name if it already exists. Test, Test(1), Test(2), ect.
@@ -179,10 +179,15 @@ def flowControl(target, endTestEvent, ds3502, DS3502Params):
     errorMargin = target * DS3502Params["margin"]
     targetReached = False
     sleep(params["windUpTime"]/1000)
+    demoCount = 0
 
     while not endTestEvent.is_set():
-        with params["sensors"]["temperature"]["thermocouple no."][3].get_lock():
-            tempAvg = params["sensors"]["temperature"]["thermocouple no."][3].value
+        if not params["demoMode"]:
+            with params["sensors"]["temperature"]["thermocouple no."][3].get_lock():
+                tempAvg = params["sensors"]["temperature"]["thermocouple no."][3].value
+        else:
+            tempAvg = float(demoData[demoCount][13])
+            demoCount = (demoCount + 1) % len(demoData)
         if abs(target - tempAvg) > errorMargin or targetReached == False:
             setValve = max(66, min(127, setValve + (-1 if target > tempAvg else 1)))
             if targetReached == True:
